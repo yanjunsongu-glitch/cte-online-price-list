@@ -8,8 +8,6 @@ function money(v){
   return Number.isFinite(n)?n.toLocaleString('en-US'):v;
 }
 
-const valueKeys=['retail','installer','wholesale','rebate'];
-
 export default function Home(){
   const [data,setData]=useState(null);
   const [q,setQ]=useState('');
@@ -24,6 +22,13 @@ export default function Home(){
     ...s,
     rows:s.rows.filter(r=>r.visible!==false && (!q || (r.spec+' '+r.remarks).toLowerCase().includes(q.toLowerCase())))
   })).filter(s=>s.rows.length),[data,q]);
+
+  const labels={
+    no:data?.labels?.no||'No.',
+    product:data?.labels?.product||'Product Specification',
+    preview:data?.labels?.preview||'Preview',
+    remarks:data?.labels?.remarks||'Remarks'
+  };
 
   function open(r){
     const items=[
@@ -43,7 +48,7 @@ export default function Home(){
         <div className="thumb-frame">
           {r.image ? <img src={r.image} alt={r.spec}/> : <div className="thumb-placeholder">PDF / Datasheet</div>}
         </div>
-        <span>{r.image ? 'Preview' : 'Open file'}</span>
+        <span>{r.image ? labels.preview : 'Open file'}</span>
       </button>
     );
   }
@@ -77,16 +82,15 @@ export default function Home(){
       {sections.map((s)=>(
         <section key={s.name} className="section">
           <h3>{s.name}</h3>
-
-          <div className="table-wrap desktop-only">
+          <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>No.</th>
-                  <th>Product Specification</th>
-                  <th>Preview</th>
-                  {s.heads.map(h=><th key={h}>{h}</th>)}
-                  <th>Remarks</th>
+                  <th>{labels.no}</th>
+                  <th>{labels.product}</th>
+                  <th>{labels.preview}</th>
+                  {s.heads.map((h,i)=><th key={i}>{h}</th>)}
+                  <th>{labels.remarks}</th>
                 </tr>
               </thead>
               <tbody>
@@ -107,45 +111,6 @@ export default function Home(){
                 ))}
               </tbody>
             </table>
-          </div>
-
-          <div className="mobile-cards mobile-only no-print">
-            {s.rows.map((r,ri)=>(
-              <article key={r.id} className="product-mobile-card">
-                <div className="product-mobile-top">
-                  <div>
-                    <div className="mobile-index">#{ri+1}</div>
-                    <h4>{r.spec}</h4>
-                  </div>
-                  <div className="mobile-media">
-                    {(r.image || r.datasheets?.length) ? (
-                      <button className="mobile-preview-btn" onClick={()=>open(r)}>
-                        <div className="mobile-thumb-frame">
-                          {r.image ? <img src={r.image} alt={r.spec}/> : <div className="thumb-placeholder">PDF</div>}
-                        </div>
-                        <span>Tap to view</span>
-                      </button>
-                    ) : (
-                      <div className="mobile-no-media">No file</div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mobile-price-grid">
-                  {s.heads.map((head,idx)=>(
-                    <div className="price-item" key={head}>
-                      <div className="price-label">{head}</div>
-                      <div className="price-value">{money(r[valueKeys[idx]])}</div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mobile-remarks">
-                  <strong>Remarks</strong>
-                  <p>{r.remarks || '-'}</p>
-                </div>
-              </article>
-            ))}
           </div>
         </section>
       ))}
