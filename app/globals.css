@@ -921,3 +921,316 @@ footer{text-align:center;padding:24px;color:#7b8791}
   .print-level-control{width:100%;justify-content:space-between}
   .print-level-control select{flex:1}
 }
+
+
+/* Portrait quotation print design - modeled after the preferred legacy template */
+@media print{
+  @page{
+    size:A4 portrait;
+    margin:10mm 9mm;
+  }
+
+  .print-document{
+    display:block!important;
+    width:100%;
+    background:#fff;
+    color:#1f2b36;
+    font-family:Arial,Helvetica,sans-serif;
+  }
+
+  .pq-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:8mm;
+    margin-bottom:3mm;
+  }
+
+  .pq-brand{
+    display:flex;
+    align-items:center;
+    gap:4mm;
+    min-width:0;
+  }
+
+  .pq-brand img{
+    width:18mm;
+    height:18mm;
+    object-fit:contain;
+    flex:0 0 auto;
+  }
+
+  .pq-brand h1{
+    margin:0 0 1mm;
+    color:#0a3f82;
+    font-size:14pt;
+    line-height:1.08;
+    letter-spacing:.1pt;
+  }
+
+  .pq-brand p{
+    margin:.5mm 0;
+    color:#5f6871;
+    font-size:6.7pt;
+    line-height:1.3;
+  }
+
+  .pq-validity{
+    margin-top:1mm;
+    padding:2mm 3mm;
+    border:1pt solid #0d55ac;
+    border-radius:2.2mm;
+    background:#f3f7fc!important;
+    color:#0d4f9b;
+    font-size:7.4pt;
+    font-weight:700;
+    white-space:nowrap;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  .pq-blue-line{
+    height:1.2mm;
+    background:#0a4da2!important;
+    margin:0 0 3.5mm;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  .pq-titlebar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    min-height:12mm;
+    padding:2.5mm 4mm;
+    background:linear-gradient(90deg,#07459a 0%,#0a52b6 60%,#2f66d3 100%)!important;
+    border-radius:2mm;
+    color:#fff!important;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  .pq-titlebar strong{
+    font-size:16pt;
+    line-height:1;
+    letter-spacing:.2pt;
+  }
+
+  .pq-titlebar span{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:28mm;
+    padding:1.5mm 3mm;
+    border:1pt solid rgba(255,255,255,.6);
+    border-radius:999px;
+    color:#fff!important;
+    font-size:7pt;
+    font-weight:700;
+    letter-spacing:1pt;
+  }
+
+  .pq-note{
+    margin:3mm 0;
+    padding:2.2mm 3mm;
+    border:1pt dashed #7fb0ef;
+    border-radius:1.5mm;
+    background:#f8fbff!important;
+    color:#1757a4;
+    font-size:7.1pt;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  .pq-ratebar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:4mm;
+    margin-bottom:4mm;
+    padding:1.6mm 2.5mm;
+    border:1pt solid #8eb7ec;
+    border-radius:1.4mm;
+    background:#edf4fd!important;
+    color:#074a99;
+    font-size:7pt;
+    font-weight:700;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  .pq-rates{
+    display:flex;
+    gap:3mm;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .pq-section{
+    margin:0 0 4mm;
+    break-inside:auto;
+  }
+
+  .pq-section-head{
+    display:flex;
+    align-items:center;
+    gap:2.5mm;
+    min-height:9mm;
+    margin:0;
+    padding:0 3mm;
+    background:#edf3fb!important;
+    border-left:3mm solid #074aa0;
+    border-radius:1.5mm 1.5mm 0 0;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  .pq-section-no{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:9mm;
+    height:6mm;
+    padding:0 2mm;
+    border-radius:1.3mm;
+    background:#ed1b24!important;
+    color:#fff!important;
+    font-size:8pt;
+    font-weight:800;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  .pq-section-head strong{
+    color:#07479b;
+    font-size:11pt;
+    line-height:1.1;
+  }
+
+  .pq-table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    font-size:7.2pt;
+    line-height:1.25;
+  }
+
+  .pq-table thead{display:table-header-group}
+
+  .pq-table tr{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+
+  .pq-table th{
+    padding:2mm 1mm;
+    border:.45pt solid #a8bad0;
+    background:#0750a7!important;
+    color:#fff!important;
+    text-align:center;
+    vertical-align:middle;
+    font-size:6.7pt;
+    line-height:1.15;
+    font-weight:700;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  .pq-table td{
+    padding:1.6mm 1mm;
+    border:.45pt solid #c1cede;
+    text-align:center;
+    vertical-align:middle;
+    color:#2c3136;
+    background:#fff!important;
+  }
+
+  .pq-table tbody tr:nth-child(even) td{
+    background:#f4f8fd!important;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  .pq-table th:nth-child(1),.pq-table td:nth-child(1){
+    width:5%;
+  }
+
+  .pq-table th:nth-child(2),.pq-table td:nth-child(2){
+    width:18%;
+  }
+
+  .pq-table th:nth-child(3),.pq-table td:nth-child(3){
+    width:18%;
+  }
+
+  .pq-table th:last-child,.pq-table td:last-child{
+    width:21%;
+  }
+
+  .pq-spec{
+    text-align:left!important;
+    font-size:7.3pt;
+    font-weight:700;
+    color:#1c2c3d;
+  }
+
+  .pq-image-cell{
+    height:27mm;
+  }
+
+  .pq-image-cell img{
+    display:block;
+    max-width:24mm;
+    max-height:24mm;
+    object-fit:contain;
+    margin:0 auto;
+  }
+
+  .pq-price{
+    font-size:8pt;
+    font-weight:700;
+    color:#17212b;
+  }
+
+  .pq-remarks{
+    text-align:left!important;
+    font-size:6.7pt;
+    line-height:1.35;
+    color:#555d65;
+  }
+
+  .pq-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10mm;
+    margin-top:3mm;
+    padding-top:2mm;
+    border-top:.6pt solid #cfdae5;
+    color:#708091;
+    font-size:6pt;
+  }
+
+  .print-doc-brandbar,
+  .print-section,
+  .print-table,
+  .print-doc-footer{
+    display:none!important;
+  }
+}
+
+/* Datasheet PDF viewer button */
+.open-file-tab{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:34px;
+  padding:0 12px;
+  border:1px solid #c5d6e6;
+  border-radius:8px;
+  background:#f7fbff;
+  color:#0b5ba7;
+  text-decoration:none;
+  font-size:12px;
+  font-weight:700;
+}
