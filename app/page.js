@@ -18,12 +18,16 @@ export default function Home(){
   const [selected,setSelected]=useState({});
   const [printMode,setPrintMode]=useState(null);
   const [printPriceLevel,setPrintPriceLevel]=useState('retail');
-  const [fxDisplay,setFxDisplay]=useState('both');
+  const [todayRate,setTodayRate]=useState('');
   const stageRef=useRef(null);
   const dragRef=useRef(null);
 
   useEffect(()=>{
-    fetch('/api/catalog',{cache:'no-store'}).then(r=>r.json()).then(setData)
+    fetch('/api/catalog',{cache:'no-store'}).then(r=>r.json()).then(j=>{
+      setData(j);
+      const saved=typeof window!=='undefined'?window.localStorage.getItem('cteTodayCnyMmkRate'):'';
+      setTodayRate(saved||String(j.rate||''));
+    })
   },[]);
 
   useEffect(()=>{
@@ -58,7 +62,24 @@ export default function Home(){
 
   const printPriceCount={retail:1,installer:2,wholesale:3,all:4}[printPriceLevel]||1;
   const rate1Label=data?.rateLabel1||'CNY / MMK';
-  const rate2Label=data?.rateLabel2||'USD / MMK';
+
+  function updateTodayRate(v){
+    setTodayRate(v);
+    if(typeof window!=='undefined') window.localStorage.setItem('cteTodayCnyMmkRate',v);
+  }
+
+  function dualPrice(v,print=false){
+    if(v===null||v===undefined||v==='') return '';
+    if(v==='/'||String(v).includes('%')) return <span>{v}</span>;
+    const n=Number(v);
+    if(!Number.isFinite(n)) return <span>{v}</span>;
+    const r=Number(todayRate);
+    const mmk=Number.isFinite(r)&&r>0?Math.round(n*r):null;
+    return <span className={print?'dual-price dual-price-print':'dual-price'}>
+      <b>{n.toLocaleString('en-US')} <small>CNY</small></b>
+      {mmk!==null && <em>{mmk.toLocaleString('en-US')} <small>MMK</small></em>}
+    </span>
+  }
 
   const printSections=useMemo(()=>{
     if(!data) return [];
@@ -200,8 +221,7 @@ export default function Home(){
       <div className="pq-ratebar">
         <div>{'CURRENCY: '+(data.currency||'CNY')}</div>
         <div className="pq-rates">
-          {(fxDisplay==='rate1'||fxDisplay==='both') && data.rate && <span>{rate1Label}: <b>{data.rate}</b></span>}
-          {(fxDisplay==='rate2'||fxDisplay==='both') && data.rate2 && <span>{rate2Label}: <b>{data.rate2}</b></span>}
+          {todayRate && <span>Today's {rate1Label}: <b>{todayRate}</b></span>}
         </div>
       </div>
 
@@ -226,10 +246,10 @@ export default function Home(){
               <td>{ri+1}</td>
               <td className="pq-spec">{r.spec}</td>
               <td className="pq-image-cell">{r.image?<img src={r.image} alt=""/>:'-'}</td>
-              {printPriceCount>=1 && <td className="pq-price">{money(r.retail)}</td>}
-              {printPriceCount>=2 && <td className="pq-price">{money(r.installer)}</td>}
-              {printPriceCount>=3 && <td className="pq-price">{money(r.wholesale)}</td>}
-              {printPriceCount>=4 && <td className="pq-price">{money(r.rebate)}</td>}
+              {printPriceCount>=1 && <td className="pq-price">{dualPrice(r.retail,true)}</td>}
+              {printPriceCount>=2 && <td className="pq-price">{dualPrice(r.installer,true)}</td>}
+              {printPriceCount>=3 && <td className="pq-price">{dualPrice(r.wholesale,true)}</td>}
+              {printPriceCount>=4 && <td className="pq-price">{dualPrice(r.rebate,true)}</td>}
               <td className="pq-remarks">{r.remarks}</td>
             </tr>)}
           </tbody>
@@ -267,8 +287,7 @@ export default function Home(){
           <h2>{data.title||'CTE Price List'}</h2>
           <div className="validity-line">{data.validity}</div>
           <div className="rate-pills">
-            {(fxDisplay==='rate1'||fxDisplay==='both') && data.rate && <span><b>{rate1Label}</b>{data.rate}</span>}
-            {(fxDisplay==='rate2'||fxDisplay==='both') && data.rate2 && <span><b>{rate2Label}</b>{data.rate2}</span>}
+            {todayRate && <span><b>Today's {rate1Label}</b>{todayRate}</span>}
           </div>
           <div className="note">{data.note}</div>
         </div>
@@ -286,13 +305,10 @@ export default function Home(){
             <option value="all">All price columns</option>
           </select>
         </label>
-        <label className="print-level-control fx-level-control">
-          <span>Exchange Rate</span>
-          <select value={fxDisplay} onChange={e=>setFxDisplay(e.target.value)}>
-            <option value="rate1">{rate1Label}</option>
-            <option value="rate2" disabled={!data.rate2}>{rate2Label}</option>
-            <option value="both">Both rates</option>
-          </select>
+        <label className="today-rate-control">
+          <span>Today's CNY → MMK</span>
+          <input type="number" min="0" step="0.01" value={todayRate} onChange={e=>updateTodayRate(e.target.value)} placeholder="e.g. 693"/>
+          <button type="button" onClick={()=>updateTodayRate(String(data.rate||''))}>Use Default</button>
         </label>
         <button onClick={()=>beginPrint('all')}>Print All</button>
         <button className="print-selected-btn" onClick={()=>beginPrint('selected')}>Print Selected</button>
@@ -328,10 +344,10 @@ export default function Home(){
                     <td>{ri+1}</td>
                     <td className="spec">{r.spec}</td>
                     <td className="preview-col">{renderPreviewCell(r)}</td>
-                    <td>{money(r.retail)}</td>
-                    <td>{money(r.installer)}</td>
-                    <td>{money(r.wholesale)}</td>
-                    <td>{money(r.rebate)}</td>
+                    <td>{dualPrice(r.retail)}</td>
+                    <td>{dualPrice(r.installer)}</td>
+                    <td>{dualPrice(r.wholesale)}</td>
+                    <td>{dualPrice(r.rebate)}</td>
                     <td className="remarks">{r.remarks}</td>
                   </tr>
                 ))}
