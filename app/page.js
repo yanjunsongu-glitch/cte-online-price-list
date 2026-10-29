@@ -1,5 +1,5 @@
 'use client';
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 
 function money(v){
   if(v===null||v===undefined||v==='') return '';
@@ -14,23 +14,31 @@ export default function Home(){
   const [viewer,setViewer]=useState(null);
   const [slide,setSlide]=useState(0);
   const [zoom,setZoom]=useState(1);
-  const [pos,setPos]=useState({x:0,y:0});
-  const [drag,setDrag]=useState(null);
   const [selectMode,setSelectMode]=useState(false);
   const [selected,setSelected]=useState({});
-  const [printingSelected,setPrintingSelected]=useState(false);
+  const [printMode,setPrintMode]=useState(null);
+  const stageRef=useRef(null);
+  const dragRef=useRef(null);
 
   useEffect(()=>{
     fetch('/api/catalog',{cache:'no-store'}).then(r=>r.json()).then(setData)
   },[]);
 
   useEffect(()=>{
-    const done=()=>setPrintingSelected(false);
+    const done=()=>setPrintMode(null);
     window.addEventListener('afterprint',done);
     return ()=>window.removeEventListener('afterprint',done);
   },[]);
 
-  useEffect(()=>{ resetView(); },[slide,viewer?.product?.id]);
+  useEffect(()=>{
+    setZoom(1);
+    requestAnimationFrame(()=>{
+      if(stageRef.current){
+        stageRef.current.scrollLeft=0;
+        stageRef.current.scrollTop=0;
+      }
+    });
+  },[slide,viewer?.product?.id]);
 
   const sections=useMemo(()=>!data?[]:data.sections.map(s=>({
     ...s,
@@ -46,6 +54,14 @@ export default function Home(){
     remarks:data?.labels?.remarks||'Remarks'
   };
 
+  const printSections=useMemo(()=>{
+    if(!data) return [];
+    return data.sections.map(s=>({
+      ...s,
+      rows:s.rows.filter(r=>r.visible!==false && (printMode==='all' || (printMode==='selected' && selected[r.id])))
+    })).filter(s=>s.rows.length);
+  },[data,printMode,selected]);
+
   function open(r){
     const items=[
       ...(r.image?[{type:'image',url:r.image,name:'Product Photo'}]:[]),
@@ -56,35 +72,58 @@ export default function Home(){
     setSlide(0);
   }
 
-  function resetView(){
-    setZoom(1);
-    setPos({x:0,y:0});
-    setDrag(null);
+  function setZoomLevel(next){
+    setZoom(Math.max(.5,Math.min(3,next)));
   }
 
-  function changeZoom(delta){
-    setZoom(z=>Math.max(.5,Math.min(4,Number((z+delta).toFixed(2)))));
+  function zoomBy(delta){
+    setZoom(z=>Math.max(.5,Math.min(3,Number((z+delta).toFixed(2)))));
+  }
+
+  function resetViewer(){
+    setZoom(1);
+    requestAnimationFrame(()=>{
+      if(stageRef.current){
+        stageRef.current.scrollLeft=0;
+        stageRef.current.scrollTop=0;
+      }
+    });
   }
 
   function onWheel(e){
+    if(!viewer) return;
     e.preventDefault();
-    changeZoom(e.deltaY<0?.2:-.2);
+    zoomBy(e.deltaY<0?.15:-.15);
   }
 
   function onPointerDown(e){
-    if(zoom<=1) return;
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-    setDrag({x:e.clientX,y:e.clientY,px:pos.x,py:pos.y});
+    const el=stageRef.current;
+    if(!el || zoom<=1) return;
+    el.setPointerCapture?.(e.pointerId);
+    dragRef.current={
+      x:e.clientX,
+      y:e.clientY,
+      left:el.scrollLeft,
+      top:el.scrollTop
+    };
+    el.classList.add('is-dragging');
   }
 
   function onPointerMove(e){
-    if(!drag) return;
-    setPos({x:drag.px+(e.clientX-drag.x),y:drag.py+(e.clientY-drag.y)});
+    const el=stageRef.current;
+    const d=dragRef.current;
+    if(!el||!d) return;
+    el.scrollLeft=d.left-(e.clientX-d.x);
+    el.scrollTop=d.top-(e.clientY-d.y);
   }
 
   function onPointerUp(e){
-    e.currentTarget.releasePointerCapture?.(e.pointerId);
-    setDrag(null);
+    const el=stageRef.current;
+    if(el){
+      el.releasePointerCapture?.(e.pointerId);
+      el.classList.remove('is-dragging');
+    }
+    dragRef.current=null;
   }
 
   function toggleProduct(id){
@@ -103,19 +142,16 @@ export default function Home(){
     setSelected(next);
   }
 
-  function printAll(){
-    setPrintingSelected(false);
-    setTimeout(()=>window.print(),30);
-  }
-
-  function printSelected(){
-    const count=visibleIds.filter(id=>selected[id]).length;
-    if(!count){
-      alert('Please select at least one product to print.');
-      return;
+  function beginPrint(mode){
+    if(mode==='selected'){
+      const count=Object.values(selected).filter(Boolean).length;
+      if(!count){
+        alert('Please select at least one product to print.');
+        return;
+      }
     }
-    setPrintingSelected(true);
-    setTimeout(()=>window.print(),80);
+    setPrintMode(mode);
+    setTimeout(()=>window.print(),120);
   }
 
   function renderPreviewCell(r){
@@ -131,10 +167,60 @@ export default function Home(){
     );
   }
 
+  function PrintDocument(){
+    if(!printMode) return null;
+    return <div className="print-document">
+      <div className="print-doc-header">
+        <div>
+          <h1>{data.company?.name||'CTE MYANMAR CO.,LTD'}</h1>
+          <p>{data.company?.address}</p>
+          <p>{data.company?.tel}</p>
+        </div>
+        <div className="print-doc-title">
+          <h2>{data.title||'CTE Price List'}</h2>
+          <p>{data.validity}</p>
+          <p>{data.note}</p>
+        </div>
+      </div>
+
+      {printSections.map(section=><div className="print-section" key={section.name}>
+        <h3>{section.name}</h3>
+        <table className="print-table">
+          <thead>
+            <tr>
+              <th>{labels.no}</th>
+              <th>{labels.product}</th>
+              <th>{labels.preview}</th>
+              {section.heads.map((h,i)=><th key={i}>{h}</th>)}
+              <th>{labels.remarks}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {section.rows.map((r,ri)=><tr key={r.id}>
+              <td>{ri+1}</td>
+              <td className="spec">{r.spec}</td>
+              <td>{r.image?<img className="print-product-image" src={r.image} alt=""/>:'-'}</td>
+              <td>{money(r.retail)}</td>
+              <td>{money(r.installer)}</td>
+              <td>{money(r.wholesale)}</td>
+              <td>{money(r.rebate)}</td>
+              <td className="remarks">{r.remarks}</td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>)}
+
+      <div className="print-doc-footer">{data.company?.name}</div>
+    </div>
+  }
+
   if(!data) return <main className="shell"><div className="loading">Loading CTE price list…</div></main>;
 
-  return (
-    <main className={`shell ${printingSelected?'print-selected-mode':''}`}>
+  const item=viewer?.items?.[slide];
+  const isImage=item && (item.type==='image'||/\.(png|jpe?g|webp|gif)(\?|$)/i.test(item.url||''));
+
+  return <>
+    <main className="shell screen-content">
       <header className="hero">
         <div className="brand">
           {data.company?.logo && <img src={data.company.logo} alt="CTE"/>}
@@ -154,8 +240,8 @@ export default function Home(){
       <div className="toolbar no-print">
         <input placeholder="Search product…" value={q} onChange={e=>setQ(e.target.value)}/>
         <button className={selectMode?'secondary-active':''} onClick={()=>setSelectMode(x=>!x)}>{selectMode?'Done Selecting':'Select Products'}</button>
-        <button onClick={printAll}>Print All</button>
-        <button className="print-selected-btn" onClick={printSelected}>Print Selected</button>
+        <button onClick={()=>beginPrint('all')}>Print All</button>
+        <button className="print-selected-btn" onClick={()=>beginPrint('selected')}>Print Selected</button>
         <a href="/admin">Staff Login</a>
       </div>
 
@@ -163,12 +249,11 @@ export default function Home(){
         <strong>{visibleIds.filter(id=>selected[id]).length} selected</strong>
         <button onClick={selectAllVisible}>Select all visible</button>
         <button onClick={clearVisible}>Clear</button>
-        <span>Tick only the products you want to send to the customer, then choose Print Selected.</span>
+        <span>Select only the products you want to send to the customer.</span>
       </div>}
 
-      {sections.map((s)=>{
-        const sectionHasSelected=s.rows.some(r=>selected[r.id]);
-        return <section key={s.name} className="section" data-section-selected={sectionHasSelected?'true':'false'}>
+      {sections.map((s)=>(
+        <section key={s.name} className="section">
           <h3>{s.name}</h3>
           <div className="table-wrap">
             <table>
@@ -184,14 +269,11 @@ export default function Home(){
               </thead>
               <tbody>
                 {s.rows.map((r,ri)=>(
-                  <tr key={r.id} data-selected={selected[r.id]?'true':'false'}>
+                  <tr key={r.id}>
                     {selectMode&&<td className="select-col no-print"><input className="row-check" type="checkbox" checked={Boolean(selected[r.id])} onChange={()=>toggleProduct(r.id)}/></td>}
                     <td>{ri+1}</td>
                     <td className="spec">{r.spec}</td>
-                    <td className="preview-col">
-                      {renderPreviewCell(r)}
-                      <div className="print-image">{r.image&&<img src={r.image} alt=""/>}</div>
-                    </td>
+                    <td className="preview-col">{renderPreviewCell(r)}</td>
                     <td>{money(r.retail)}</td>
                     <td>{money(r.installer)}</td>
                     <td>{money(r.wholesale)}</td>
@@ -203,39 +285,52 @@ export default function Home(){
             </table>
           </div>
         </section>
-      })}
+      ))}
 
       <footer>{data.company?.name} · Online price list</footer>
 
       {viewer && (
         <div className="modal no-print" onClick={()=>setViewer(null)}>
-          <div className="viewer" onClick={e=>e.stopPropagation()}>
+          <div className="viewer viewer-v2" onClick={e=>e.stopPropagation()}>
             <div className="viewer-head">
               <strong>{viewer.product.spec}</strong>
               <div className="viewer-actions">
-                {(viewer.items[slide]?.type==='image'||/\.(png|jpe?g|webp|gif)(\?|$)/i.test(viewer.items[slide]?.url||'')) && <>
-                  <button onClick={()=>changeZoom(-.25)} title="Zoom out">−</button>
+                {isImage && <>
+                  <button onClick={()=>zoomBy(-.2)}>−</button>
                   <span>{Math.round(zoom*100)}%</span>
-                  <button onClick={()=>changeZoom(.25)} title="Zoom in">+</button>
-                  <button className="reset-view" onClick={resetView}>Reset</button>
+                  <button onClick={()=>zoomBy(.2)}>+</button>
+                  <button className="reset-view" onClick={resetViewer}>Fit</button>
                 </>}
                 <button className="close-viewer" onClick={()=>setViewer(null)}>×</button>
               </div>
             </div>
-            <div className={`viewer-stage ${zoom>1?'can-pan':''}`} onWheel={onWheel} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
-              {viewer.items[slide]?.type==='image'||/\.(png|jpe?g|webp|gif)(\?|$)/i.test(viewer.items[slide]?.url||'')
-                ? <img className="zoomable-image" draggable="false" style={{transform:`translate(${pos.x}px,${pos.y}px) scale(${zoom})`}} src={viewer.items[slide]?.url} alt=""/>
-                : <iframe src={viewer.items[slide]?.url}/>
+
+            <div
+              ref={stageRef}
+              className={`viewer-canvas ${zoom>1?'can-pan':''}`}
+              onWheel={onWheel}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+            >
+              {isImage
+                ? <div className="viewer-image-wrap" style={{width:`${zoom*100}%`,height:`${zoom*100}%`}}>
+                    <img src={item?.url} alt="" draggable="false"/>
+                  </div>
+                : <iframe src={item?.url}/>
               }
             </div>
+
             <div className="viewer-nav">
-              <button disabled={slide===0} onClick={()=>{setSlide(x=>x-1);resetView()}}>Previous</button>
-              <span>{viewer.items[slide]?.name} · {slide+1}/{viewer.items.length}</span>
-              <button disabled={slide>=viewer.items.length-1} onClick={()=>{setSlide(x=>x+1);resetView()}}>Next</button>
+              <button disabled={slide===0} onClick={()=>setSlide(x=>x-1)}>Previous</button>
+              <span>{item?.name} · {slide+1}/{viewer.items.length}</span>
+              <button disabled={slide>=viewer.items.length-1} onClick={()=>setSlide(x=>x+1)}>Next</button>
             </div>
           </div>
         </div>
       )}
     </main>
-  )
+    <PrintDocument/>
+  </>
 }
