@@ -54,6 +54,20 @@ export default function Admin(){
     setMsg('Uploaded. Click Save & Publish.');
   }
 
+  async function uploadLogo(file){
+    if(!file)return;
+    setMsg('Uploading company logo…');
+    const fd=new FormData();
+    fd.append('file',file);
+    fd.append('productId','company');
+    fd.append('kind','logo');
+    const r=await fetch('/api/admin/upload',{method:'POST',body:fd});
+    if(!r.ok){setMsg('Logo upload failed');return}
+    const j=await r.json();
+    setD(x=>({...x,company:{...(x.company||{}),logo:j.url}}));
+    setMsg('Logo uploaded. Click Save & Publish.');
+  }
+
   async function save(){
     setMsg('Saving…');
     const r=await fetch('/api/admin/catalog',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(d)});
@@ -80,6 +94,10 @@ export default function Admin(){
       <label>Company Name<input value={d.company?.name||''} onChange={e=>setD({...d,company:{...d.company,name:e.target.value}})}/></label>
       <label>Company Address<input value={d.company?.address||''} onChange={e=>setD({...d,company:{...d.company,address:e.target.value}})}/></label>
       <label>Company Tel<input value={d.company?.tel||''} onChange={e=>setD({...d,company:{...d.company,tel:e.target.value}})}/></label>
+      <label className="company-logo-setting">Company Logo
+        {d.company?.logo && <img src={d.company.logo} alt="CTE Logo" className="admin-company-logo"/>}
+        <input type="file" accept="image/*" onChange={e=>uploadLogo(e.target.files?.[0])}/>
+      </label>
     </div>
 
     <div className="heading-editor">
