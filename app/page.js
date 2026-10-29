@@ -18,6 +18,7 @@ export default function Home(){
   const [selected,setSelected]=useState({});
   const [printMode,setPrintMode]=useState(null);
   const [printPriceLevel,setPrintPriceLevel]=useState('retail');
+  const [fxDisplay,setFxDisplay]=useState('both');
   const stageRef=useRef(null);
   const dragRef=useRef(null);
 
@@ -199,8 +200,8 @@ export default function Home(){
       <div className="pq-ratebar">
         <div>{'CURRENCY: '+(data.currency||'CNY')}</div>
         <div className="pq-rates">
-          {data.rate && <span>{rate1Label}: <b>{data.rate}</b></span>}
-          {data.rate2 && <span>{rate2Label}: <b>{data.rate2}</b></span>}
+          {(fxDisplay==='rate1'||fxDisplay==='both') && data.rate && <span>{rate1Label}: <b>{data.rate}</b></span>}
+          {(fxDisplay==='rate2'||fxDisplay==='both') && data.rate2 && <span>{rate2Label}: <b>{data.rate2}</b></span>}
         </div>
       </div>
 
@@ -266,8 +267,8 @@ export default function Home(){
           <h2>{data.title||'CTE Price List'}</h2>
           <div className="validity-line">{data.validity}</div>
           <div className="rate-pills">
-            {data.rate && <span><b>{rate1Label}</b>{data.rate}</span>}
-            {data.rate2 && <span><b>{rate2Label}</b>{data.rate2}</span>}
+            {(fxDisplay==='rate1'||fxDisplay==='both') && data.rate && <span><b>{rate1Label}</b>{data.rate}</span>}
+            {(fxDisplay==='rate2'||fxDisplay==='both') && data.rate2 && <span><b>{rate2Label}</b>{data.rate2}</span>}
           </div>
           <div className="note">{data.note}</div>
         </div>
@@ -277,12 +278,20 @@ export default function Home(){
         <input placeholder="Search product…" value={q} onChange={e=>setQ(e.target.value)}/>
         <button className={selectMode?'secondary-active':''} onClick={()=>setSelectMode(x=>!x)}>{selectMode?'Done Selecting':'Select Products'}</button>
         <label className="print-level-control">
-          <span>Print Price</span>
+          <span>Price Level</span>
           <select value={printPriceLevel} onChange={e=>setPrintPriceLevel(e.target.value)}>
             <option value="retail">Retail only</option>
             <option value="installer">Retail + Installer</option>
             <option value="wholesale">Retail + Installer + Wholesale</option>
             <option value="all">All price columns</option>
+          </select>
+        </label>
+        <label className="print-level-control fx-level-control">
+          <span>Exchange Rate</span>
+          <select value={fxDisplay} onChange={e=>setFxDisplay(e.target.value)}>
+            <option value="rate1">{rate1Label}</option>
+            <option value="rate2" disabled={!data.rate2}>{rate2Label}</option>
+            <option value="both">Both rates</option>
           </select>
         </label>
         <button onClick={()=>beginPrint('all')}>Print All</button>
