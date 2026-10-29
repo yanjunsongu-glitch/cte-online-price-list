@@ -1,0 +1,1 @@
+import {NextResponse} from 'next/server';import {login,sessionCookie} from '@/lib/auth';export async function POST(req){const {username,password}=await req.json().catch(()=>({}));const t=login(username,password);if(!t)return NextResponse.json({ok:false},{status:401});const r=NextResponse.json({ok:true});r.cookies.set(sessionCookie.name,t,sessionCookie.options);return r}
