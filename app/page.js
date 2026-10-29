@@ -170,16 +170,23 @@ export default function Home(){
   function PrintDocument(){
     if(!printMode) return null;
     return <div className="print-document">
-      <div className="print-doc-header">
-        <div>
-          <h1>{data.company?.name||'CTE MYANMAR CO.,LTD'}</h1>
-          <p>{data.company?.address}</p>
-          <p>{data.company?.tel}</p>
+      <div className="print-doc-brandbar">
+        <div className="print-doc-brand">
+          {data.company?.logo && <img className="print-doc-logo" src={data.company.logo} alt="CTE logo"/>}
+          <div className="print-doc-company">
+            <h1>{data.company?.name||'CTE MYANMAR CO.,LTD'}</h1>
+            <p>{data.company?.address}</p>
+            <p>{data.company?.tel}</p>
+          </div>
         </div>
         <div className="print-doc-title">
+          <div className="print-doc-kicker">CUSTOMER PRICE LIST</div>
           <h2>{data.title||'CTE Price List'}</h2>
-          <p>{data.validity}</p>
-          <p>{data.note}</p>
+          <div className="print-doc-meta">
+            <span>{data.validity}</span>
+            {data.rate && <span>Exchange Rate: {data.rate}</span>}
+          </div>
+          <p className="print-doc-note">{data.note}</p>
         </div>
       </div>
 
