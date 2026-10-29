@@ -104,8 +104,8 @@ export default function Admin(){
         <div className="media">
           {r.image&&<img src={r.image} alt=""/>}
           <label>Replace photo<input type="file" accept="image/*" onChange={e=>upload(si,ri,'image',e.target.files?.[0])}/></label>
-          <label>Add datasheet<input type="file" accept="image/*,.pdf" onChange={e=>upload(si,ri,'datasheet',e.target.files?.[0])}/></label>
-          {(r.datasheets||[]).map((x,di)=><div className="file" key={x.url}><a href={x.url} target="_blank">{x.name}</a><button onClick={()=>{const n=cp(d);n.sections[si].rows[ri].datasheets.splice(di,1);setD(n)}}>Remove</button></div>)}
+          <label>Upload Datasheet (PDF / Image)<input type="file" accept="application/pdf,image/*,.pdf" onChange={e=>upload(si,ri,'datasheet',e.target.files?.[0])}/></label>
+          {(r.datasheets||[]).map((x,di)=><div className="file" key={x.url}><a href={x.url} target="_blank" rel="noreferrer">{x.type==='pdf'?'PDF · ':x.type==='image'?'Image · ':''}{x.name}</a><button onClick={()=>{const n=cp(d);n.sections[si].rows[ri].datasheets.splice(di,1);setD(n)}}>Remove</button></div>)}
         </div>
         <div className="fields">
           <label>Product Specification<input value={r.spec} onChange={e=>patch(si,ri,'spec',e.target.value)}/></label>
