@@ -1306,3 +1306,64 @@ footer{text-align:center;padding:24px;color:#7b8791}
     min-width:120px;
   }
 }
+
+
+/* Currency display refinements */
+.currency-display-control select{min-width:130px}
+.dual-price{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  line-height:1.15;
+}
+.price-cny{
+  display:block;
+  color:#0b355e!important;
+  font-size:15px!important;
+  font-weight:800!important;
+  letter-spacing:.1px;
+}
+.price-mmk{
+  display:block;
+  color:#c33a2b!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  font-style:normal!important;
+}
+.price-mmk small{
+  color:#c33a2b!important;
+  font-size:9px!important;
+  font-weight:800!important;
+  letter-spacing:.4px;
+}
+.dual-price-print .price-cny{
+  font-size:7.6pt!important;
+}
+.dual-price-print .price-mmk{
+  font-size:6.4pt!important;
+}
+.dual-price-print .price-mmk small{
+  font-size:5.5pt!important;
+}
+
+/* Admin company logo setting */
+.company-logo-setting{
+  align-content:start;
+}
+.admin-company-logo{
+  display:block;
+  width:110px;
+  height:70px;
+  object-fit:contain;
+  margin:6px 0 8px;
+  padding:6px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:8px;
+}
+.company-logo-setting input[type="file"]{
+  padding:7px!important;
+  background:#f8fbff;
+}
