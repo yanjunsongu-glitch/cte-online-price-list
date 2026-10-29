@@ -72,7 +72,10 @@ export default function Admin(){
     <div className="settings settings-wide">
       <label>Title<input value={d.title||''} onChange={e=>setD({...d,title:e.target.value})}/></label>
       <label>Validity<input value={d.validity||''} onChange={e=>setD({...d,validity:e.target.value})}/></label>
-      <label>Exchange Rate<input value={d.rate||''} onChange={e=>setD({...d,rate:e.target.value})}/></label>
+      <label>Exchange Rate 1 Label<input value={d.rateLabel1||'CNY / MMK'} onChange={e=>setD({...d,rateLabel1:e.target.value})}/></label>
+      <label>Exchange Rate 1<input value={d.rate||''} onChange={e=>setD({...d,rate:e.target.value})}/></label>
+      <label>Exchange Rate 2 Label<input value={d.rateLabel2||'USD / MMK'} onChange={e=>setD({...d,rateLabel2:e.target.value})}/></label>
+      <label>Exchange Rate 2<input value={d.rate2||''} onChange={e=>setD({...d,rate2:e.target.value})}/></label>
       <label>Top Note<input value={d.note||''} onChange={e=>setD({...d,note:e.target.value})}/></label>
       <label>Company Name<input value={d.company?.name||''} onChange={e=>setD({...d,company:{...d.company,name:e.target.value}})}/></label>
       <label>Company Address<input value={d.company?.address||''} onChange={e=>setD({...d,company:{...d.company,address:e.target.value}})}/></label>
