@@ -17,6 +17,7 @@ export default function Home(){
   const [selectMode,setSelectMode]=useState(false);
   const [selected,setSelected]=useState({});
   const [printMode,setPrintMode]=useState(null);
+  const [printPriceLevel,setPrintPriceLevel]=useState('retail');
   const stageRef=useRef(null);
   const dragRef=useRef(null);
 
@@ -53,6 +54,10 @@ export default function Home(){
     preview:data?.labels?.preview||'Preview',
     remarks:data?.labels?.remarks||'Remarks'
   };
+
+  const printPriceCount={retail:1,installer:2,wholesale:3,all:4}[printPriceLevel]||1;
+  const rate1Label=data?.rateLabel1||'CNY / MMK';
+  const rate2Label=data?.rateLabel2||'USD / MMK';
 
   const printSections=useMemo(()=>{
     if(!data) return [];
@@ -172,7 +177,7 @@ export default function Home(){
     return <div className="print-document">
       <div className="print-doc-brandbar">
         <div className="print-doc-brand">
-          {data.company?.logo && <img className="print-doc-logo" src={data.company.logo} alt="CTE logo"/>}
+          <img className="print-doc-logo" src={data.company?.logo||'/logo.jpg'} alt="CTE logo"/>
           <div className="print-doc-company">
             <h1>{data.company?.name||'CTE MYANMAR CO.,LTD'}</h1>
             <p>{data.company?.address}</p>
@@ -184,7 +189,8 @@ export default function Home(){
           <h2>{data.title||'CTE Price List'}</h2>
           <div className="print-doc-meta">
             <span>{data.validity}</span>
-            {data.rate && <span>Exchange Rate: {data.rate}</span>}
+            {data.rate && <span>{rate1Label}: {data.rate}</span>}
+            {data.rate2 && <span>{rate2Label}: {data.rate2}</span>}
           </div>
           <p className="print-doc-note">{data.note}</p>
         </div>
@@ -198,7 +204,7 @@ export default function Home(){
               <th>{labels.no}</th>
               <th>{labels.product}</th>
               <th>{labels.preview}</th>
-              {section.heads.map((h,i)=><th key={i}>{h}</th>)}
+              {section.heads.slice(0,printPriceCount).map((h,i)=><th className="print-price-col" key={i}>{h}</th>)}
               <th>{labels.remarks}</th>
             </tr>
           </thead>
@@ -207,10 +213,10 @@ export default function Home(){
               <td>{ri+1}</td>
               <td className="spec">{r.spec}</td>
               <td>{r.image?<img className="print-product-image" src={r.image} alt=""/>:'-'}</td>
-              <td>{money(r.retail)}</td>
-              <td>{money(r.installer)}</td>
-              <td>{money(r.wholesale)}</td>
-              <td>{money(r.rebate)}</td>
+              {printPriceCount>=1 && <td className="print-price-col">{money(r.retail)}</td>}
+              {printPriceCount>=2 && <td className="print-price-col">{money(r.installer)}</td>}
+              {printPriceCount>=3 && <td className="print-price-col">{money(r.wholesale)}</td>}
+              {printPriceCount>=4 && <td className="print-price-col">{money(r.rebate)}</td>}
               <td className="remarks">{r.remarks}</td>
             </tr>)}
           </tbody>
@@ -228,18 +234,26 @@ export default function Home(){
 
   return <>
     <main className="shell screen-content">
-      <header className="hero">
-        <div className="brand">
-          {data.company?.logo && <img src={data.company.logo} alt="CTE"/>}
+      <header className="hero premium-hero">
+        <div className="brand premium-brand">
+          <div className="brand-logo-wrap">
+            <img src={data.company?.logo||'/logo.jpg'} alt="CTE"/>
+          </div>
           <div>
+            <div className="brand-eyebrow">PHOTOVOLTAIC · ENERGY STORAGE</div>
             <h1>{data.company?.name||'CTE MYANMAR CO.,LTD'}</h1>
             <p>{data.company?.address}</p>
             <p>{data.company?.tel}</p>
           </div>
         </div>
-        <div className="title">
+        <div className="title premium-title">
+          <div className="price-list-badge">LIVE PRICE LIST</div>
           <h2>{data.title||'CTE Price List'}</h2>
-          <div>{data.validity}</div>
+          <div className="validity-line">{data.validity}</div>
+          <div className="rate-pills">
+            {data.rate && <span><b>{rate1Label}</b>{data.rate}</span>}
+            {data.rate2 && <span><b>{rate2Label}</b>{data.rate2}</span>}
+          </div>
           <div className="note">{data.note}</div>
         </div>
       </header>
@@ -247,6 +261,15 @@ export default function Home(){
       <div className="toolbar no-print">
         <input placeholder="Search product…" value={q} onChange={e=>setQ(e.target.value)}/>
         <button className={selectMode?'secondary-active':''} onClick={()=>setSelectMode(x=>!x)}>{selectMode?'Done Selecting':'Select Products'}</button>
+        <label className="print-level-control">
+          <span>Print Price</span>
+          <select value={printPriceLevel} onChange={e=>setPrintPriceLevel(e.target.value)}>
+            <option value="retail">Retail only</option>
+            <option value="installer">Retail + Installer</option>
+            <option value="wholesale">Retail + Installer + Wholesale</option>
+            <option value="all">All price columns</option>
+          </select>
+        </label>
         <button onClick={()=>beginPrint('all')}>Print All</button>
         <button className="print-selected-btn" onClick={()=>beginPrint('selected')}>Print Selected</button>
         <a href="/admin">Staff Login</a>
