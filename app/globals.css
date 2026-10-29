@@ -710,3 +710,214 @@ footer{text-align:center;padding:24px;color:#7b8791}
     margin-left:auto;
   }
 }
+
+
+/* Premium customer-facing price list */
+.premium-hero{
+  position:relative;
+  overflow:hidden;
+  padding:30px 34px;
+  border-bottom:0;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(11,91,167,.10), transparent 34%),
+    linear-gradient(135deg,#ffffff 0%,#f8fbff 58%,#eef5fc 100%);
+}
+.premium-hero:after{
+  content:"";
+  position:absolute;
+  left:0;right:0;bottom:0;
+  height:5px;
+  background:linear-gradient(90deg,#d92b2f 0 17%,#0b5ba7 17% 100%);
+}
+.premium-brand{align-items:center}
+.brand-logo-wrap{
+  width:94px;height:94px;
+  display:grid;place-items:center;
+  background:#fff;
+  border:1px solid #dbe6f0;
+  border-radius:20px;
+  box-shadow:0 12px 30px rgba(8,61,112,.12);
+  flex:0 0 auto;
+}
+.brand-logo-wrap img{
+  width:76px!important;
+  height:76px!important;
+  object-fit:contain;
+}
+.brand-eyebrow{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:1.6px;
+  color:#d92b2f;
+  margin-bottom:7px;
+}
+.premium-brand h1{
+  font-size:25px;
+  color:#0c2e4d;
+  letter-spacing:.1px;
+}
+.premium-title{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  justify-content:center;
+}
+.price-list-badge{
+  display:inline-flex;
+  padding:6px 10px;
+  margin-bottom:8px;
+  border-radius:999px;
+  background:#0b5ba7;
+  color:#fff;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:1.1px;
+}
+.validity-line{font-weight:700;color:#4d6073!important}
+.rate-pills{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:8px 0 4px;
+}
+.rate-pills span{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  padding:7px 10px;
+  border:1px solid #cbd9e6;
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 4px 12px rgba(8,61,112,.05);
+  font-size:12px;
+  color:#1e3e5e;
+}
+.rate-pills b{color:#0b5ba7}
+.print-level-control{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid #d7e2ec;
+  background:#f8fbff;
+  padding:6px 8px 6px 10px;
+  border-radius:10px;
+  color:#496174;
+  font-size:12px;
+  font-weight:700;
+}
+.print-level-control select{
+  border:0;
+  outline:0;
+  background:#fff;
+  color:#173b5c;
+  padding:5px 8px;
+  border-radius:7px;
+  font-weight:700;
+}
+
+/* Portrait print template with variable price tiers */
+@media print{
+  @page{
+    size:A4 portrait;
+    margin:9mm 8mm;
+  }
+  .print-document{
+    width:100%!important;
+  }
+  .print-doc-brandbar{
+    align-items:flex-start!important;
+    gap:7mm!important;
+    padding-bottom:4mm!important;
+    margin-bottom:4mm!important;
+  }
+  .print-doc-brand{
+    flex:1 1 56%!important;
+    gap:3.5mm!important;
+  }
+  .print-doc-logo{
+    width:18mm!important;
+    height:18mm!important;
+  }
+  .print-doc-company h1{
+    font-size:12pt!important;
+  }
+  .print-doc-company p{
+    font-size:6.6pt!important;
+  }
+  .print-doc-title{
+    flex:0 1 42%!important;
+    max-width:42%!important;
+  }
+  .print-doc-kicker{
+    font-size:5.8pt!important;
+  }
+  .print-doc-title h2{
+    font-size:15pt!important;
+  }
+  .print-doc-meta{
+    gap:1.2mm!important;
+  }
+  .print-doc-meta span{
+    font-size:5.8pt!important;
+    padding:.55mm 1.1mm!important;
+  }
+  .print-doc-note{
+    font-size:5.9pt!important;
+  }
+  .print-section{
+    margin-bottom:3.3mm!important;
+  }
+  .print-section h3{
+    padding:1.7mm 2mm!important;
+    font-size:8.2pt!important;
+  }
+  .print-table{
+    table-layout:auto!important;
+    font-size:6.2pt!important;
+    line-height:1.18!important;
+  }
+  .print-table th,.print-table td{
+    padding:1.15mm .7mm!important;
+  }
+  .print-table th{
+    font-size:5.9pt!important;
+  }
+  .print-table th:nth-child(1),.print-table td:nth-child(1){
+    width:5%!important;
+  }
+  .print-table th:nth-child(2),.print-table td:nth-child(2){
+    width:21%!important;
+  }
+  .print-table th:nth-child(3),.print-table td:nth-child(3){
+    width:14%!important;
+  }
+  .print-table .print-price-col{
+    width:auto!important;
+    min-width:16mm;
+    white-space:normal;
+  }
+  .print-table th:last-child,.print-table td:last-child{
+    width:28%!important;
+  }
+  .print-product-image{
+    width:17mm!important;
+    height:14mm!important;
+  }
+  .print-table .remarks{
+    font-size:5.8pt!important;
+  }
+  .print-doc-footer{
+    font-size:5.8pt!important;
+  }
+}
+
+@media(max-width:760px){
+  .premium-hero{padding:22px 16px}
+  .premium-title{align-items:flex-start}
+  .rate-pills{justify-content:flex-start}
+  .brand-logo-wrap{width:72px;height:72px;border-radius:16px}
+  .brand-logo-wrap img{width:58px!important;height:58px!important}
+  .print-level-control{width:100%;justify-content:space-between}
+  .print-level-control select{flex:1}
+}
