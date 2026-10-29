@@ -18,6 +18,7 @@ export default function Home(){
   const [selected,setSelected]=useState({});
   const [printMode,setPrintMode]=useState(null);
   const [printPriceLevel,setPrintPriceLevel]=useState('retail');
+  const [currencyDisplay,setCurrencyDisplay]=useState('both');
   const [todayRate,setTodayRate]=useState('');
   const stageRef=useRef(null);
   const dragRef=useRef(null);
@@ -76,8 +77,8 @@ export default function Home(){
     const r=Number(todayRate);
     const mmk=Number.isFinite(r)&&r>0?Math.round(n*r):null;
     return <span className={print?'dual-price dual-price-print':'dual-price'}>
-      <b>{n.toLocaleString('en-US')} <small>CNY</small></b>
-      {mmk!==null && <em>{mmk.toLocaleString('en-US')} <small>MMK</small></em>}
+      {(currencyDisplay==='cny'||currencyDisplay==='both') && <b className="price-cny">{n.toLocaleString('en-US')}</b>}
+      {(currencyDisplay==='mmk'||currencyDisplay==='both') && mmk!==null && <em className="price-mmk">{mmk.toLocaleString('en-US')} <small>MMK</small></em>}
     </span>
   }
 
@@ -303,6 +304,14 @@ export default function Home(){
             <option value="installer">Retail + Installer</option>
             <option value="wholesale">Retail + Installer + Wholesale</option>
             <option value="all">All price columns</option>
+          </select>
+        </label>
+        <label className="print-level-control currency-display-control">
+          <span>Currency Display</span>
+          <select value={currencyDisplay} onChange={e=>setCurrencyDisplay(e.target.value)}>
+            <option value="cny">CNY Price</option>
+            <option value="mmk">MMK Price</option>
+            <option value="both">Both</option>
           </select>
         </label>
         <label className="today-rate-control">
