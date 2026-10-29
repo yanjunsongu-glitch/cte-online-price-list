@@ -175,55 +175,70 @@ export default function Home(){
   function PrintDocument(){
     if(!printMode) return null;
     return <div className="print-document">
-      <div className="print-doc-brandbar">
-        <div className="print-doc-brand">
-          <img className="print-doc-logo" src={data.company?.logo||'/logo.jpg'} alt="CTE logo"/>
-          <div className="print-doc-company">
+      <div className="pq-header">
+        <div className="pq-brand">
+          <img src={data.company?.logo||'/logo.jpg'} alt="CTE logo"/>
+          <div>
             <h1>{data.company?.name||'CTE MYANMAR CO.,LTD'}</h1>
             <p>{data.company?.address}</p>
-            <p>{data.company?.tel}</p>
+            <p>TEL: {data.company?.tel}</p>
           </div>
         </div>
-        <div className="print-doc-title">
-          <div className="print-doc-kicker">CUSTOMER PRICE LIST</div>
-          <h2>{data.title||'CTE Price List'}</h2>
-          <div className="print-doc-meta">
-            <span>{data.validity}</span>
-            {data.rate && <span>{rate1Label}: {data.rate}</span>}
-            {data.rate2 && <span>{rate2Label}: {data.rate2}</span>}
-          </div>
-          <p className="print-doc-note">{data.note}</p>
+        <div className="pq-validity">{data.validity}</div>
+      </div>
+
+      <div className="pq-blue-line"></div>
+
+      <div className="pq-titlebar">
+        <strong>{data.printTitle||'Product Quotation'}</strong>
+        <span>{printPriceLevel==='retail'?'RETAIL':printPriceLevel==='installer'?'FOR INSTALLERS':printPriceLevel==='wholesale'?'FOR WHOLESALE':'FULL PRICE LIST'}</span>
+      </div>
+
+      <div className="pq-note">{data.note||'Prices exclude installation charges.'}</div>
+
+      <div className="pq-ratebar">
+        <div>{'CURRENCY: '+(data.currency||'CNY')}</div>
+        <div className="pq-rates">
+          {data.rate && <span>{rate1Label}: <b>{data.rate}</b></span>}
+          {data.rate2 && <span>{rate2Label}: <b>{data.rate2}</b></span>}
         </div>
       </div>
 
-      {printSections.map(section=><div className="print-section" key={section.name}>
-        <h3>{section.name}</h3>
-        <table className="print-table">
+      {printSections.map((section,si)=><section className="pq-section" key={section.name}>
+        <div className="pq-section-head">
+          <span className="pq-section-no">{String(si+1).padStart(2,'0')}</span>
+          <strong>{section.name}</strong>
+        </div>
+
+        <table className="pq-table">
           <thead>
             <tr>
               <th>{labels.no}</th>
               <th>{labels.product}</th>
-              <th>{labels.preview}</th>
-              {section.heads.slice(0,printPriceCount).map((h,i)=><th className="print-price-col" key={i}>{h}</th>)}
+              <th>{data.printImageLabel||'Product Image'}</th>
+              {section.heads.slice(0,printPriceCount).map((h,i)=><th key={i}>{h}<br/>{data.currency||'CNY'}</th>)}
               <th>{labels.remarks}</th>
             </tr>
           </thead>
           <tbody>
             {section.rows.map((r,ri)=><tr key={r.id}>
               <td>{ri+1}</td>
-              <td className="spec">{r.spec}</td>
-              <td>{r.image?<img className="print-product-image" src={r.image} alt=""/>:'-'}</td>
-              {printPriceCount>=1 && <td className="print-price-col">{money(r.retail)}</td>}
-              {printPriceCount>=2 && <td className="print-price-col">{money(r.installer)}</td>}
-              {printPriceCount>=3 && <td className="print-price-col">{money(r.wholesale)}</td>}
-              {printPriceCount>=4 && <td className="print-price-col">{money(r.rebate)}</td>}
-              <td className="remarks">{r.remarks}</td>
+              <td className="pq-spec">{r.spec}</td>
+              <td className="pq-image-cell">{r.image?<img src={r.image} alt=""/>:'-'}</td>
+              {printPriceCount>=1 && <td className="pq-price">{money(r.retail)}</td>}
+              {printPriceCount>=2 && <td className="pq-price">{money(r.installer)}</td>}
+              {printPriceCount>=3 && <td className="pq-price">{money(r.wholesale)}</td>}
+              {printPriceCount>=4 && <td className="pq-price">{money(r.rebate)}</td>}
+              <td className="pq-remarks">{r.remarks}</td>
             </tr>)}
           </tbody>
         </table>
-      </div>)}
+      </section>)}
 
-      <div className="print-doc-footer">{data.company?.name}</div>
+      <div className="pq-footer">
+        <span>{data.company?.name}</span>
+        <span>Official Customer Price List</span>
+      </div>
     </div>
   }
 
@@ -331,6 +346,7 @@ export default function Home(){
                   <button onClick={()=>zoomBy(.2)}>+</button>
                   <button className="reset-view" onClick={resetViewer}>Fit</button>
                 </>}
+                {!isImage && item?.url && <a className="open-file-tab" href={item.url} target="_blank" rel="noreferrer">Open PDF</a>}
                 <button className="close-viewer" onClick={()=>setViewer(null)}>×</button>
               </div>
             </div>
