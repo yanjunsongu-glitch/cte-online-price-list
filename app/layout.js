@@ -1,0 +1,1 @@
+import './globals.css'; export const metadata={title:'CTE Online Price List'}; export default function RootLayout({children}){return <html lang="en"><body>{children}</body></html>}
