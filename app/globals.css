@@ -558,3 +558,155 @@ footer{text-align:center;padding:24px;color:#7b8791}
     margin:7mm;
   }
 }
+
+
+/* Customer-facing branded print template v3 */
+@media print{
+  .print-document{
+    width:100%;
+    max-width:none;
+    background:#fff;
+  }
+  .print-doc-brandbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12mm;
+    padding:0 0 4.2mm;
+    margin-bottom:3.5mm;
+    border-bottom:2.2pt solid #0b5ba7;
+    position:relative;
+  }
+  .print-doc-brandbar:after{
+    content:"";
+    position:absolute;
+    left:0;
+    bottom:-2.2pt;
+    width:34mm;
+    height:2.2pt;
+    background:#d92b2f;
+  }
+  .print-doc-brand{
+    display:flex;
+    align-items:center;
+    gap:4mm;
+    min-width:0;
+    flex:1 1 55%;
+  }
+  .print-doc-logo{
+    width:21mm;
+    height:21mm;
+    object-fit:contain;
+    flex:0 0 auto;
+  }
+  .print-doc-company{
+    min-width:0;
+  }
+  .print-doc-company h1{
+    margin:0 0 1mm;
+    font-size:14pt;
+    line-height:1.1;
+    color:#102c49;
+    letter-spacing:.1pt;
+  }
+  .print-doc-company p{
+    margin:.45mm 0;
+    font-size:7.2pt;
+    color:#586a7c;
+    line-height:1.25;
+  }
+  .print-doc-title{
+    max-width:42%;
+    text-align:right;
+    flex:0 1 42%;
+  }
+  .print-doc-kicker{
+    margin-bottom:1mm;
+    font-size:6.5pt;
+    font-weight:700;
+    letter-spacing:1.2pt;
+    color:#d92b2f;
+  }
+  .print-doc-title h2{
+    margin:0;
+    font-size:18pt;
+    line-height:1.05;
+    color:#083d70;
+    font-weight:800;
+  }
+  .print-doc-meta{
+    display:flex;
+    justify-content:flex-end;
+    gap:2.5mm;
+    flex-wrap:wrap;
+    margin-top:1.4mm;
+  }
+  .print-doc-meta span{
+    display:inline-block;
+    padding:.7mm 1.6mm;
+    border:1px solid #c8d6e4;
+    border-radius:999px;
+    background:#f5f9fd!important;
+    color:#42576b;
+    font-size:6.6pt;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .print-doc-note{
+    margin:1.2mm 0 0!important;
+    font-size:6.8pt!important;
+    line-height:1.25!important;
+    color:#637588!important;
+  }
+
+  .print-section{
+    margin:0 0 3.5mm;
+    break-inside:auto;
+  }
+  .print-section h3{
+    padding:1.9mm 2.4mm;
+    font-size:8.7pt;
+    letter-spacing:.1pt;
+    border-radius:1.6mm 1.6mm 0 0;
+  }
+  .print-table{
+    border:1pt solid #0b5ba7;
+    border-top:0;
+  }
+  .print-table th{
+    background:#edf4fb!important;
+    color:#0a355f!important;
+    font-weight:700;
+  }
+  .print-table tbody tr:nth-child(even) td{
+    background:#fbfdff!important;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .print-table td{
+    color:#18293a;
+  }
+  .print-table .spec{
+    font-weight:700;
+    color:#0b355e;
+  }
+  .print-product-image{
+    width:17mm;
+    height:13mm;
+  }
+  .print-doc-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10mm;
+    margin-top:4mm;
+    padding-top:2.2mm;
+    border-top:.6pt solid #c5d3df;
+    text-align:left;
+    color:#697c8e;
+  }
+  .print-doc-footer:after{
+    content:"Generated from CTE Online Price List";
+    margin-left:auto;
+  }
+}
