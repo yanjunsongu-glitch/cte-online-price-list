@@ -1234,3 +1234,75 @@ footer{text-align:center;padding:24px;color:#7b8791}
   font-size:12px;
   font-weight:700;
 }
+
+
+/* Coworker daily FX control and dual-currency prices */
+.today-rate-control{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid #d7e2ec;
+  background:#f8fbff;
+  padding:6px 8px 6px 10px;
+  border-radius:10px;
+  color:#496174;
+  font-size:12px;
+  font-weight:700;
+}
+.today-rate-control input{
+  width:110px;
+  border:1px solid #cfdbe7;
+  background:#fff;
+  color:#173b5c;
+  padding:7px 8px;
+  border-radius:7px;
+  font-weight:700;
+}
+.today-rate-control button{
+  padding:7px 9px!important;
+  background:#fff!important;
+  color:#0b5ba7!important;
+  border:1px solid #bdd0e2!important;
+}
+.dual-price{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  line-height:1.15;
+}
+.dual-price b{
+  font-size:13px;
+  color:#17212b;
+}
+.dual-price em{
+  font-style:normal;
+  font-size:11px;
+  color:#0b5ba7;
+  font-weight:700;
+}
+.dual-price small{
+  font-size:9px;
+  font-weight:700;
+  color:#718196;
+}
+.dual-price-print b{
+  font-size:7.1pt!important;
+}
+.dual-price-print em{
+  font-size:6.2pt!important;
+  color:#0b5ba7!important;
+}
+.dual-price-print small{
+  font-size:5.2pt!important;
+}
+@media(max-width:850px){
+  .today-rate-control{
+    width:100%;
+    flex-wrap:wrap;
+  }
+  .today-rate-control input{
+    flex:1;
+    min-width:120px;
+  }
+}
