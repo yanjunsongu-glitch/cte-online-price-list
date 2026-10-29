@@ -38,12 +38,12 @@ export default function Admin(){
   }
 
   async function upload(si,ri,kind,file){
-    if(!file)return;
+    if(!file)return null;
     setMsg('Uploading…');
     const row=d.sections[si].rows[ri],fd=new FormData();
     fd.append('file',file);fd.append('productId',row.id);fd.append('kind',kind);
     const r=await fetch('/api/admin/upload',{method:'POST',body:fd});
-    if(!r.ok){setMsg('Upload failed');return}
+    if(!r.ok){return null}
     const j=await r.json();
     setD(x=>{
       const n=cp(x),z=n.sections[si].rows[ri];
@@ -51,7 +51,21 @@ export default function Admin(){
       else z.datasheets=[...(z.datasheets||[]),j];
       return n
     });
-    setMsg('Uploaded. Click Save & Publish.');
+    return j;
+  }
+
+  async function uploadDatasheets(si,ri,files){
+    const list=Array.from(files||[]);
+    if(!list.length)return;
+    let ok=0,failed=0;
+    setMsg('Uploading '+list.length+' datasheet files…');
+    for(const file of list){
+      try{
+        const result=await upload(si,ri,'datasheet',file);
+        if(result) ok++; else failed++;
+      }catch(e){failed++}
+    }
+    setMsg((ok?ok+' uploaded':'No files uploaded')+(failed?' · '+failed+' failed':'')+'. Click Save & Publish.');
   }
 
   async function uploadLogo(file){
@@ -122,7 +136,10 @@ export default function Admin(){
         <div className="media">
           {r.image&&<img src={r.image} alt=""/>}
           <label>Replace photo<input type="file" accept="image/*" onChange={e=>upload(si,ri,'image',e.target.files?.[0])}/></label>
-          <label>Upload Datasheet (PDF / Image)<input type="file" accept="application/pdf,image/*,.pdf" onChange={e=>upload(si,ri,'datasheet',e.target.files?.[0])}/></label>
+          <label>Upload Datasheet (PDF / Image)
+            <input type="file" multiple accept="application/pdf,image/*,.pdf" onChange={e=>uploadDatasheets(si,ri,e.target.files)}/>
+            <span className="upload-help">Multiple files allowed · Max 15MB per file</span>
+          </label>
           {(r.datasheets||[]).map((x,di)=><div className="file" key={x.url}><a href={x.url} target="_blank" rel="noreferrer">{x.type==='pdf'?'PDF · ':x.type==='image'?'Image · ':''}{x.name}</a><button onClick={()=>{const n=cp(d);n.sections[si].rows[ri].datasheets.splice(di,1);setD(n)}}>Remove</button></div>)}
         </div>
         <div className="fields">
