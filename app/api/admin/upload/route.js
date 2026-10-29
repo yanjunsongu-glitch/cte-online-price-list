@@ -1,1 +1,29 @@
-import {NextResponse} from 'next/server';import {sessionFromRequest} from '@/lib/auth';import {put} from '@vercel/blob';export async function POST(req){if(!sessionFromRequest(req))return NextResponse.json({error:'Unauthorized'},{status:401});const f=await req.formData(),file=f.get('file'),pid=String(f.get('productId')||'file'),kind=String(f.get('kind')||'asset');if(!file||typeof file==='string')return NextResponse.json({error:'No file'},{status:400});if(file.size>15728640)return NextResponse.json({error:'Max 15MB'},{status:400});const safe=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_');const b=await put('assets/'+pid+'/'+kind+'-'+Date.now()+'-'+safe,file,{access:'public',addRandomSuffix:true});return NextResponse.json({url:b.url,name:file.name,type:file.type.startsWith('image/')?'image':'file'})}
+import {NextResponse} from 'next/server';
+import {sessionFromRequest} from '@/lib/auth';
+import {put} from '@vercel/blob';
+
+export async function POST(req){
+  if(!sessionFromRequest(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
+  const f=await req.formData();
+  const file=f.get('file');
+  const pid=String(f.get('productId')||'file');
+  const kind=String(f.get('kind')||'asset');
+  if(!file||typeof file==='string') return NextResponse.json({error:'No file'},{status:400});
+  if(file.size>15728640) return NextResponse.json({error:'Max 15MB'},{status:400});
+
+  if(kind==='datasheet'){
+    const isPdf=file.type==='application/pdf' || /\.pdf$/i.test(file.name||'');
+    const isImage=(file.type||'').startsWith('image/');
+    if(!isPdf && !isImage) return NextResponse.json({error:'Datasheet must be PDF or image'},{status:400});
+  }
+
+  const safe=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_');
+  const b=await put('assets/'+pid+'/'+kind+'-'+Date.now()+'-'+safe,file,{
+    access:'public',
+    addRandomSuffix:true,
+    contentType:file.type||undefined
+  });
+
+  const type=file.type==='application/pdf'||/\.pdf$/i.test(file.name||'')?'pdf':(file.type||'').startsWith('image/')?'image':'file';
+  return NextResponse.json({url:b.url,name:file.name,type});
+}
