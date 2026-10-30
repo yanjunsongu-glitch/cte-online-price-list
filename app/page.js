@@ -22,6 +22,7 @@ export default function Home(){
   const [selectedColumnKeys,setSelectedColumnKeys]=useState(['retail','installer','wholesale','packageDiscount','repeatDiscount','specialDiscount']);
   const [currencyDisplay,setCurrencyDisplay]=useState('both');
   const [todayRate,setTodayRate]=useState('');
+  const [settingsOpen,setSettingsOpen]=useState(false);
   const stageRef=useRef(null);
   const toolbarRef=useRef(null);
   const dragRef=useRef(null);
@@ -39,6 +40,18 @@ export default function Home(){
     window.addEventListener('afterprint',done);
     return ()=>window.removeEventListener('afterprint',done);
   },[]);
+
+  useEffect(()=>{
+    if(!settingsOpen) return;
+    const onKey=e=>{if(e.key==='Escape') setSettingsOpen(false)};
+    window.addEventListener('keydown',onKey);
+    const old=document.body.style.overflow;
+    document.body.style.overflow='hidden';
+    return ()=>{
+      window.removeEventListener('keydown',onKey);
+      document.body.style.overflow=old;
+    };
+  },[settingsOpen]);
 
   useEffect(()=>{
     setZoom(1);
@@ -349,37 +362,10 @@ export default function Home(){
       <div ref={toolbarRef} className="toolbar toolbar-scroll no-print" onWheel={scrollToolbar}>
         <input className="toolbar-search" placeholder="Search product…" value={q} onChange={e=>setQ(e.target.value)}/>
         <button className={selectMode?'secondary-active':''} onClick={()=>setSelectMode(x=>!x)}>{selectMode?'Done Selecting':'Select Products'}</button>
-
-        <details className="column-picker">
-          <summary>
-            <span>Price Columns</span>
-            <b>{selectedColumnKeys.length} selected</b>
-          </summary>
-          <div className="column-picker-menu">
-            <div className="column-picker-actions">
-              <button type="button" onClick={selectAllColumns}>Select all</button>
-              <button type="button" onClick={clearColumns}>Clear</button>
-            </div>
-            {columnChoices.map(col=><label key={col.key}>
-              <input type="checkbox" checked={selectedColumnKeys.includes(col.key)} onChange={()=>toggleColumn(col.key)}/>
-              <span>{col.label}</span>
-            </label>)}
-          </div>
-        </details>
-
-        <label className="print-level-control currency-display-control">
-          <span>Currency Display</span>
-          <select value={currencyDisplay} onChange={e=>setCurrencyDisplay(e.target.value)}>
-            <option value="cny">CNY Price</option>
-            <option value="mmk">MMK Price</option>
-            <option value="both">Both</option>
-          </select>
-        </label>
-        <label className="today-rate-control">
-          <span>Today's CNY → MMK</span>
-          <input type="number" min="0" step="0.01" value={todayRate} onChange={e=>updateTodayRate(e.target.value)} placeholder="e.g. 693"/>
-          <button type="button" onClick={()=>updateTodayRate(String(data.rate||''))}>Use Default</button>
-        </label>
+        <button className="display-settings-btn" onClick={()=>setSettingsOpen(true)}>
+          <span>Display Settings</span>
+          <small>{selectedColumnKeys.length} columns · {currencyDisplay==='cny'?'CNY':currencyDisplay==='mmk'?'MMK':'CNY + MMK'}</small>
+        </button>
         <button onClick={()=>beginPrint('all')}>Print All</button>
         <button className="print-selected-btn" onClick={()=>beginPrint('selected')}>Print Selected</button>
         <a href="/admin">Staff Login</a>
@@ -390,6 +376,83 @@ export default function Home(){
         <button onClick={selectAllVisible}>Select all visible</button>
         <button onClick={clearVisible}>Clear</button>
         <span>Select only the products you want to send to the customer.</span>
+      </div>}
+
+      {settingsOpen && <div className="display-settings-overlay no-print" onClick={()=>setSettingsOpen(false)}>
+        <div className="display-settings-sheet" onClick={e=>e.stopPropagation()}>
+          <div className="settings-handle"></div>
+          <div className="display-settings-head">
+            <div>
+              <div className="settings-kicker">PRICE LIST VIEW</div>
+              <h3>Display Settings</h3>
+              <p>Choose exactly what customers should see.</p>
+            </div>
+            <button className="settings-close" onClick={()=>setSettingsOpen(false)}>×</button>
+          </div>
+
+          <section className="settings-section">
+            <div className="settings-section-title">
+              <div>
+                <strong>Price Columns</strong>
+                <span>{selectedColumnKeys.length} selected</span>
+              </div>
+              <div className="settings-mini-actions">
+                <button type="button" onClick={selectAllColumns}>All</button>
+                <button type="button" onClick={clearColumns}>Clear</button>
+              </div>
+            </div>
+
+            <div className="preset-row">
+              <button type="button" onClick={()=>setSelectedColumnKeys(['retail'])}>Retail only</button>
+              <button type="button" onClick={()=>setSelectedColumnKeys(['retail','installer'])}>Retail + Installer</button>
+              <button type="button" onClick={()=>setSelectedColumnKeys(['retail','repeatDiscount'])}>Retail + Repeat Dis</button>
+            </div>
+
+            <div className="column-choice-grid">
+              {columnChoices.map(col=>{
+                const active=selectedColumnKeys.includes(col.key);
+                return <button type="button" key={col.key} className={active?'column-choice active':'column-choice'} onClick={()=>toggleColumn(col.key)}>
+                  <span className="choice-check">{active?'✓':''}</span>
+                  <span className="choice-copy">
+                    <strong>{col.label}</strong>
+                    <small>{col.type==='price'?'Price column':'Discount column'}</small>
+                  </span>
+                </button>
+              })}
+            </div>
+          </section>
+
+          <section className="settings-section">
+            <div className="settings-section-title">
+              <div>
+                <strong>Currency Display</strong>
+                <span>Choose how product prices appear</span>
+              </div>
+            </div>
+            <div className="currency-segment">
+              <button className={currencyDisplay==='cny'?'active':''} onClick={()=>setCurrencyDisplay('cny')}>CNY</button>
+              <button className={currencyDisplay==='mmk'?'active':''} onClick={()=>setCurrencyDisplay('mmk')}>MMK</button>
+              <button className={currencyDisplay==='both'?'active':''} onClick={()=>setCurrencyDisplay('both')}>Both</button>
+            </div>
+          </section>
+
+          <section className="settings-section">
+            <div className="settings-section-title">
+              <div>
+                <strong>Today&apos;s Exchange Rate</strong>
+                <span>CNY → MMK</span>
+              </div>
+            </div>
+            <div className="settings-rate-row">
+              <input type="number" min="0" step="0.01" value={todayRate} onChange={e=>updateTodayRate(e.target.value)} placeholder="e.g. 693"/>
+              <button type="button" onClick={()=>updateTodayRate(String(data.rate||''))}>Use Default</button>
+            </div>
+          </section>
+
+          <div className="display-settings-footer">
+            <button className="settings-done" onClick={()=>setSettingsOpen(false)}>Done</button>
+          </div>
+        </div>
       </div>}
 
       {sections.map((s,si)=>{
