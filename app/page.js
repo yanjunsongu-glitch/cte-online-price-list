@@ -63,8 +63,28 @@ export default function Home(){
     remarks:data?.labels?.remarks||'Remarks'
   };
 
-  const printPriceCount={retail:1,installer:2,wholesale:3,all:4}[printPriceLevel]||1;
   const rate1Label=data?.rateLabel1||'CNY / MMK';
+
+  function sectionColumns(section){
+    if(Array.isArray(section.columns)) return section.columns;
+    return (section.heads||[]).map((label,i)=>({
+      key:['retail','installer','wholesale','rebate'][i]||('value'+i),
+      label,
+      type:i<3?'price':'discount'
+    }));
+  }
+
+  function printColumns(section){
+    const cols=sectionColumns(section);
+    if(printPriceLevel==='all') return cols;
+    const limit={retail:1,installer:2,wholesale:3}[printPriceLevel]||1;
+    return cols.filter(c=>c.type==='price').slice(0,limit);
+  }
+
+  function renderValue(row,col,print=false){
+    const v=row?.[col.key];
+    return col.type==='price'?dualPrice(v,print):<span className={print?'discount-value discount-value-print':'discount-value'}>{v||''}</span>;
+  }
 
   function updateTodayRate(v){
     setTodayRate(v);
@@ -228,7 +248,9 @@ export default function Home(){
         </div>
       </div>
 
-      {printSections.map((section,si)=><section className="pq-section" key={section.name}>
+      {printSections.map((section,si)=>{
+        const startNo=printSections.slice(0,si).reduce((n,x)=>n+x.rows.length,0);
+        return <section className="pq-section" key={section.name}>
         <div className="pq-section-head">
           <span className="pq-section-no">{String(si+1).padStart(2,'0')}</span>
           <strong>{section.name}</strong>
@@ -240,24 +262,21 @@ export default function Home(){
               <th>{labels.no}</th>
               <th>{labels.product}</th>
               <th>{data.printImageLabel||'Product Image'}</th>
-              {section.heads.slice(0,printPriceCount).map((h,i)=><th key={i}>{h}<br/>{data.currency||'CNY'}</th>)}
+              {printColumns(section).map((col,i)=><th key={col.key}>{col.label}{col.type==='price'?<><br/>{data.currency||'CNY'}</>:null}</th>)}
               <th>{labels.remarks}</th>
             </tr>
           </thead>
           <tbody>
             {section.rows.map((r,ri)=><tr key={r.id}>
-              <td>{ri+1}</td>
+              <td>{startNo+ri+1}</td>
               <td className="pq-spec">{r.spec}</td>
               <td className="pq-image-cell">{r.image?<img src={r.image} alt=""/>:'-'}</td>
-              {printPriceCount>=1 && <td className="pq-price">{dualPrice(r.retail,true)}</td>}
-              {printPriceCount>=2 && <td className="pq-price">{dualPrice(r.installer,true)}</td>}
-              {printPriceCount>=3 && <td className="pq-price">{dualPrice(r.wholesale,true)}</td>}
-              {printPriceCount>=4 && <td className="pq-price">{dualPrice(r.rebate,true)}</td>}
+              {printColumns(section).map(col=><td className={col.type==='price'?'pq-price':'pq-discount'} key={col.key}>{renderValue(r,col,true)}</td>)}
               <td className="pq-remarks">{r.remarks}</td>
             </tr>)}
           </tbody>
         </table>
-      </section>)}
+      </section>})}
 
       <div className="pq-footer">
         <span>{data.company?.name}</span>
@@ -306,7 +325,7 @@ export default function Home(){
             <option value="retail">Retail only</option>
             <option value="installer">Retail + Installer</option>
             <option value="wholesale">Retail + Installer + Wholesale</option>
-            <option value="all">All price columns</option>
+            <option value="all">All prices + discounts</option>
           </select>
         </label>
         <label className="print-level-control currency-display-control">
@@ -334,8 +353,9 @@ export default function Home(){
         <span>Select only the products you want to send to the customer.</span>
       </div>}
 
-      {sections.map((s)=>(
-        <section key={s.name} className="section">
+      {sections.map((s,si)=>{
+        const startNo=sections.slice(0,si).reduce((n,x)=>n+x.rows.length,0);
+        return <section key={s.name} className="section">
           <h3>{s.name}</h3>
           <div className="table-wrap customer-table-wrap">
             <table className="price-table">
@@ -345,7 +365,7 @@ export default function Home(){
                   <th>{labels.no}</th>
                   <th>{labels.product}</th>
                   <th>{labels.preview}</th>
-                  {s.heads.map((h,i)=><th key={i}>{h}</th>)}
+                  {sectionColumns(s).map(col=><th key={col.key}>{col.label}</th>)}
                   <th>{labels.remarks}</th>
                 </tr>
               </thead>
@@ -353,13 +373,10 @@ export default function Home(){
                 {s.rows.map((r,ri)=>(
                   <tr key={r.id}>
                     {selectMode&&<td className="select-col no-print" data-label="Select"><input className="row-check" type="checkbox" checked={Boolean(selected[r.id])} onChange={()=>toggleProduct(r.id)}/></td>}
-                    <td data-label={labels.no}>{ri+1}</td>
+                    <td data-label={labels.no}>{startNo+ri+1}</td>
                     <td className="spec" data-label={labels.product}>{r.spec}</td>
                     <td className="preview-col" data-label={labels.preview}>{renderPreviewCell(r)}</td>
-                    <td className="price-cell" data-label={s.heads[0]}>{dualPrice(r.retail)}</td>
-                    <td className="price-cell" data-label={s.heads[1]}>{dualPrice(r.installer)}</td>
-                    <td className="price-cell" data-label={s.heads[2]}>{dualPrice(r.wholesale)}</td>
-                    <td className="price-cell" data-label={s.heads[3]}>{dualPrice(r.rebate)}</td>
+                    {sectionColumns(s).map(col=><td key={col.key} className={col.type==='price'?'price-cell':'discount-cell'} data-label={col.label}>{renderValue(r,col)}</td>)}
                     <td className="remarks" data-label={labels.remarks}>{r.remarks}</td>
                   </tr>
                 ))}
@@ -367,7 +384,7 @@ export default function Home(){
             </table>
           </div>
         </section>
-      ))}
+      })}
 
       <footer>{data.company?.name} · Online price list</footer>
 
