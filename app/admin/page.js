@@ -8,6 +8,7 @@ export default function Admin(){
   const [p,setP]=useState('');
   const [d,setD]=useState(null);
   const [msg,setMsg]=useState('');
+  const [shares,setShares]=useState([]);
 
   async function load(){
     const r=await fetch('/api/admin/catalog',{cache:'no-store'});
@@ -16,6 +17,38 @@ export default function Admin(){
       j.labels=j.labels||{};
       j.company=j.company||{};
       setD(j);
+      loadShares();
+    }
+  }
+
+  async function loadShares(){
+    const r=await fetch('/api/admin/shares',{cache:'no-store'});
+    if(r.ok){
+      const j=await r.json();
+      setShares(j.items||[]);
+    }
+  }
+
+  async function toggleShare(token,active){
+    setMsg(active?'Enabling customer link…':'Disabling customer link…');
+    const r=await fetch('/api/admin/shares',{
+      method:'PATCH',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({token,active})
+    });
+    if(r.ok){
+      setMsg(active?'Customer link enabled.':'Customer link disabled.');
+      loadShares();
+    }else setMsg('Could not update customer link.');
+  }
+
+  async function copyCustomerLink(token){
+    const url=window.location.origin+'/share/'+token;
+    try{
+      await navigator.clipboard.writeText(url);
+      setMsg('Customer link copied.');
+    }catch{
+      setMsg(url);
     }
   }
   useEffect(()=>{load()},[]);
@@ -158,6 +191,36 @@ export default function Admin(){
         {d.company?.logo && <img src={d.company.logo} alt="CTE Logo" className="admin-company-logo"/>}
         <input type="file" accept="image/*" onChange={e=>uploadLogo(e.target.files?.[0])}/>
       </label>
+    </div>
+
+    <div className="share-admin-panel">
+      <div className="share-admin-head">
+        <div>
+          <span>CUSTOMER SHARING</span>
+          <h2>Customer Links</h2>
+          <p>Links created from the price list can be copied, disabled or re-enabled here.</p>
+        </div>
+        <button onClick={loadShares}>Refresh</button>
+      </div>
+      {shares.length===0?<div className="share-admin-empty">No customer links created yet.</div>:<div className="share-admin-list">
+        {shares.map(x=><div className="share-admin-item" key={x.token}>
+          <div className="share-admin-main">
+            <strong>{x.customerName||'Unnamed customer'}</strong>
+            <span>{x.productCount} product(s) · {x.columnCount} column(s) · {x.currencyDisplay==='both'?'CNY + MMK':String(x.currencyDisplay||'cny').toUpperCase()}</span>
+            <small>Created {new Date(x.createdAt).toLocaleString()} {x.expiresAt?'· Expires '+new Date(x.expiresAt).toLocaleString():'· No expiry'}</small>
+          </div>
+          <div className="share-admin-status">
+            <b className={'share-status-'+x.status}>{x.status}</b>
+          </div>
+          <div className="share-admin-actions">
+            <button onClick={()=>copyCustomerLink(x.token)}>Copy Link</button>
+            <a href={'/share/'+x.token} target="_blank" rel="noreferrer">Open</a>
+            {x.active
+              ?<button className="danger" onClick={()=>toggleShare(x.token,false)}>Disable</button>
+              :<button className="success" onClick={()=>toggleShare(x.token,true)}>Enable</button>}
+          </div>
+        </div>)}
+      </div>}
     </div>
 
     <div className="heading-editor">
