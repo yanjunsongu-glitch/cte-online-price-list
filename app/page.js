@@ -262,66 +262,59 @@ export default function Home(){
 
   function PrintDocument(){
     if(!printMode) return null;
-    return <div className="print-document">
-      <div className="pq-header">
-        <div className="pq-brand">
+    return <div className="print-document print-cards-document">
+      <div className="pc-header">
+        <div className="pc-brand">
           <img src={logoSrc} onError={e=>{e.currentTarget.src=CTE_LOGO}} alt="CTE logo"/>
           <div>
             <h1>{data.company?.name||'CTE MYANMAR CO.,LTD'}</h1>
             <p>{data.company?.address}</p>
-            <p>TEL: {data.company?.tel}</p>
+            <p>{data.company?.tel}</p>
           </div>
         </div>
-        <div className="pq-validity">{data.validity}</div>
-      </div>
-
-      <div className="pq-blue-line"></div>
-
-      <div className="pq-titlebar">
-        <strong>{data.printTitle||'Product Quotation'}</strong>
-        <span>{selectedColumnKeys.length?selectedColumnKeys.map(k=>k.replace(/([A-Z])/g,' $1')).join(' + ').toUpperCase():'CUSTOM'}</span>
-      </div>
-
-      <div className="pq-note">{data.note||'Prices exclude installation charges.'}</div>
-
-      <div className="pq-ratebar">
-        <div>{'CURRENCY: '+(data.currency||'CNY')}</div>
-        <div className="pq-rates">
-          {todayRate && <span>Today's {rate1Label}: <b>{todayRate}</b></span>}
+        <div className="pc-head-right">
+          <div className="pc-kicker">CUSTOMER PRICE LIST</div>
+          <h2>{data.title||'CTE Price List'}</h2>
+          <div className="pc-validity">{data.validity}</div>
+          {todayRate && <div className="pc-rate">Today&apos;s {rate1Label}: <b>{todayRate}</b></div>}
         </div>
       </div>
+
+      <div className="pc-note">{data.note}</div>
 
       {printSections.map((section,si)=>{
         const startNo=printSections.slice(0,si).reduce((n,x)=>n+x.rows.length,0);
-        return <section className="pq-section" key={section.name}>
-        <div className="pq-section-head">
-          <span className="pq-section-no">{String(si+1).padStart(2,'0')}</span>
-          <strong>{section.name}</strong>
-        </div>
+        const cols=visibleColumns(section);
+        return <section className="pc-section" key={section.name}>
+          <div className="pc-section-title">
+            <span>{String(si+1).padStart(2,'0')}</span>
+            <strong>{section.name}</strong>
+          </div>
 
-        <table className="pq-table">
-          <thead>
-            <tr>
-              <th>{labels.no}</th>
-              <th>{labels.product}</th>
-              <th>{data.printImageLabel||'Product Image'}</th>
-              {visibleColumns(section).map((col,i)=><th key={col.key}>{col.label}{col.type==='price'?<><br/>{data.currency||'CNY'}</>:null}</th>)}
-              <th>{labels.remarks}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {section.rows.map((r,ri)=><tr key={r.id}>
-              <td>{startNo+ri+1}</td>
-              <td className="pq-spec">{r.spec}</td>
-              <td className="pq-image-cell">{r.image?<img src={r.image} alt=""/>:'-'}</td>
-              {visibleColumns(section).map(col=><td className={col.type==='price'?'pq-price':'pq-discount'} key={col.key}>{renderValue(r,col,true)}</td>)}
-              <td className="pq-remarks">{r.remarks}</td>
-            </tr>)}
-          </tbody>
-        </table>
-      </section>})}
+          <div className="pc-product-list">
+            {section.rows.map((r,ri)=><article className="pc-product-card" key={r.id}>
+              <div className="pc-product-top">
+                <div className="pc-product-no">{startNo+ri+1}</div>
+                <div className="pc-product-image">
+                  {r.image?<img src={r.image} alt=""/>:<div className="pc-no-image">No image</div>}
+                </div>
+                <div className="pc-product-main">
+                  <h3>{r.spec}</h3>
+                  <div className="pc-values">
+                    {cols.map(col=><div className={col.type==='price'?'pc-value pc-value-price':'pc-value pc-value-discount'} key={col.key}>
+                      <span>{col.label}</span>
+                      <strong>{renderValue(r,col,true)}</strong>
+                    </div>)}
+                  </div>
+                </div>
+              </div>
+              {r.remarks && <div className="pc-remarks"><b>Remarks</b><span>{r.remarks}</span></div>}
+            </article>)}
+          </div>
+        </section>
+      })}
 
-      <div className="pq-footer">
+      <div className="pc-footer">
         <span>{data.company?.name}</span>
         <span>Official Customer Price List</span>
       </div>
