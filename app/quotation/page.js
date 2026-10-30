@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
+import './quotation.css';
 
 const uid=()=>crypto.randomUUID();
 const today=()=>new Date().toISOString().slice(0,10);
