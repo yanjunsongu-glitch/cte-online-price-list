@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useState} from 'react';
+import {upload as blobUpload} from '@vercel/blob/client';
 const cp=x=>JSON.parse(JSON.stringify(x));
 
 export default function Admin(){
@@ -44,21 +45,53 @@ export default function Admin(){
 
   async function upload(si,ri,kind,file){
     if(!file)return null;
-    setMsg('Uploading…');
-    const row=d.sections[si].rows[ri],fd=new FormData();
-    fd.append('file',file);fd.append('productId',row.id);fd.append('kind',kind);
-    const r=await fetch('/api/admin/upload',{method:'POST',body:fd});
-    if(!r.ok){return null}
-    const j=await r.json();
-    setD(x=>{
-      const n=cp(x),z=n.sections[si].rows[ri];
-      if(kind==='image')z.image=j.url;
-      else z.datasheets=[...(z.datasheets||[]),j];
-      return n
-    });
-    return j;
-  }
+    if(file.size>15*1024*1024){
+      setMsg(file.name+' is larger than 15MB.');
+      return null;
+    }
+    const isPdf=file.type==='application/pdf'||/\.pdf$/i.test(file.name||'');
+    const isImage=(file.type||'').startsWith('image/');
+    if(kind==='datasheet'&&!isPdf&&!isImage){
+      setMsg(file.name+' must be a PDF or image.');
+      return null;
+    }
+    if((kind==='image'||kind==='logo')&&!isImage){
+      setMsg(file.name+' must be an image.');
+      return null;
+    }
 
+    const row=d.sections[si]?.rows[ri];
+    const productId=row?.id||'file';
+    setMsg('Uploading '+file.name+'…');
+
+    try{
+      const blob=await blobUpload(file.name,file,{
+        access:'public',
+        handleUploadUrl:'/api/admin/upload',
+        clientPayload:JSON.stringify({
+          productId,
+          kind,
+          fileName:file.name
+        })
+      });
+      const result={
+        url:blob.url,
+        name:file.name,
+        type:isPdf?'pdf':isImage?'image':'file'
+      };
+      setD(x=>{
+        const n=cp(x),z=n.sections[si].rows[ri];
+        if(kind==='image')z.image=result.url;
+        else z.datasheets=[...(z.datasheets||[]),result];
+        return n;
+      });
+      return result;
+    }catch(e){
+      console.error(e);
+      setMsg('Upload failed: '+(e?.message||file.name));
+      return null;
+    }
+  }
   async function uploadDatasheets(si,ri,files){
     const list=Array.from(files||[]);
     if(!list.length)return;
@@ -75,18 +108,26 @@ export default function Admin(){
 
   async function uploadLogo(file){
     if(!file)return;
+    if(file.size>15*1024*1024){setMsg('Logo is larger than 15MB.');return}
+    if(!(file.type||'').startsWith('image/')){setMsg('Logo must be an image.');return}
     setMsg('Uploading company logo…');
-    const fd=new FormData();
-    fd.append('file',file);
-    fd.append('productId','company');
-    fd.append('kind','logo');
-    const r=await fetch('/api/admin/upload',{method:'POST',body:fd});
-    if(!r.ok){setMsg('Logo upload failed');return}
-    const j=await r.json();
-    setD(x=>({...x,company:{...(x.company||{}),logo:j.url}}));
-    setMsg('Logo uploaded. Click Save & Publish.');
+    try{
+      const blob=await blobUpload(file.name,file,{
+        access:'public',
+        handleUploadUrl:'/api/admin/upload',
+        clientPayload:JSON.stringify({
+          productId:'company',
+          kind:'logo',
+          fileName:file.name
+        })
+      });
+      setD(x=>({...x,company:{...(x.company||{}),logo:blob.url}}));
+      setMsg('Logo uploaded. Click Save & Publish.');
+    }catch(e){
+      console.error(e);
+      setMsg('Logo upload failed: '+(e?.message||'Unknown error'));
+    }
   }
-
   async function save(){
     setMsg('Saving…');
     const r=await fetch('/api/admin/catalog',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(d)});
