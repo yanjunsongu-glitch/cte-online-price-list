@@ -1852,3 +1852,84 @@ footer{
     grid-column:1!important;
   }
 }
+
+
+/* NOV-1101 dynamic catalog columns */
+.dynamic-value-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:10px;
+}
+.dynamic-value-grid label{
+  font-size:12px;
+  font-weight:700;
+  display:grid;
+  gap:5px;
+}
+.dynamic-value-grid input{
+  padding:9px;
+  border:1px solid var(--line);
+  border-radius:7px;
+}
+.discount-cell{
+  min-width:120px;
+  text-align:center;
+}
+.discount-value{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:42px;
+  min-height:26px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:#fff4e8;
+  color:#a7540b;
+  font-weight:800;
+  font-size:12px;
+}
+.price-table{
+  min-width:1380px;
+}
+@media(max-width:720px){
+  .discount-cell{
+    min-width:0!important;
+  }
+  .discount-value{
+    font-size:12px;
+  }
+}
+@media print{
+  .pq-table{
+    table-layout:auto!important;
+  }
+  .pq-table th,.pq-table td{
+    width:auto!important;
+  }
+  .pq-table th:nth-child(1),.pq-table td:nth-child(1){
+    width:5%!important;
+  }
+  .pq-table th:nth-child(2),.pq-table td:nth-child(2){
+    width:19%!important;
+  }
+  .pq-table th:nth-child(3),.pq-table td:nth-child(3){
+    width:16%!important;
+  }
+  .pq-table th:last-child,.pq-table td:last-child{
+    width:24%!important;
+  }
+  .pq-discount{
+    text-align:center!important;
+    font-weight:800;
+    color:#9a4b0a;
+  }
+  .discount-value-print{
+    min-width:0;
+    min-height:0;
+    padding:0;
+    border-radius:0;
+    background:transparent!important;
+    color:#9a4b0a!important;
+    font-size:7pt!important;
+  }
+}
