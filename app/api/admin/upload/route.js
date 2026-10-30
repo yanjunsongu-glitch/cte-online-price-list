@@ -1,29 +1,48 @@
 import {NextResponse} from 'next/server';
+import {handleUpload} from '@vercel/blob/client';
 import {sessionFromRequest} from '@/lib/auth';
-import {put} from '@vercel/blob';
 
-export async function POST(req){
-  if(!sessionFromRequest(req)) return NextResponse.json({error:'Unauthorized'},{status:401});
-  const f=await req.formData();
-  const file=f.get('file');
-  const pid=String(f.get('productId')||'file');
-  const kind=String(f.get('kind')||'asset');
-  if(!file||typeof file==='string') return NextResponse.json({error:'No file'},{status:400});
-  if(file.size>15728640) return NextResponse.json({error:'Max 15MB'},{status:400});
+function safeName(v){
+  return String(v||'file').replace(/[^a-zA-Z0-9._-]/g,'_');
+}
 
-  if(kind==='datasheet'){
-    const isPdf=file.type==='application/pdf' || /\.pdf$/i.test(file.name||'');
-    const isImage=(file.type||'').startsWith('image/');
-    if(!isPdf && !isImage) return NextResponse.json({error:'Datasheet must be PDF or image'},{status:400});
+export async function POST(request){
+  const body=await request.json();
+
+  try{
+    const jsonResponse=await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken:async(pathname,clientPayload)=>{
+        if(!sessionFromRequest(request)) throw new Error('Unauthorized');
+
+        let meta={};
+        try{meta=clientPayload?JSON.parse(clientPayload):{}}catch{}
+
+        const kind=String(meta.kind||'asset');
+        const productId=safeName(meta.productId||'file');
+        const fileName=safeName(meta.fileName||pathname.split('/').pop()||'file');
+
+        const isDatasheet=kind==='datasheet';
+        const isImageKind=kind==='image'||kind==='logo';
+
+        return {
+          pathname:'assets/'+productId+'/'+kind+'-'+Date.now()+'-'+fileName,
+          allowedContentTypes:isDatasheet
+            ? ['application/pdf','image/*']
+            : isImageKind
+              ? ['image/*']
+              : ['application/pdf','image/*'],
+          maximumSizeInBytes:15*1024*1024,
+          tokenPayload:JSON.stringify({productId,kind,fileName})
+        };
+      },
+      onUploadCompleted:async()=>{}
+    });
+
+    return NextResponse.json(jsonResponse);
+  }catch(error){
+    console.error('Blob client upload error',error);
+    return NextResponse.json({error:error?.message||'Upload failed'},{status:400});
   }
-
-  const safe=(file.name||'file').replace(/[^a-zA-Z0-9._-]/g,'_');
-  const b=await put('assets/'+pid+'/'+kind+'-'+Date.now()+'-'+safe,file,{
-    access:'public',
-    addRandomSuffix:true,
-    contentType:file.type||undefined
-  });
-
-  const type=file.type==='application/pdf'||/\.pdf$/i.test(file.name||'')?'pdf':(file.type||'').startsWith('image/')?'image':'file';
-  return NextResponse.json({url:b.url,name:file.name,type});
 }
