@@ -1,6 +1,8 @@
 'use client';
 import {useEffect,useMemo,useRef,useState} from 'react';
 
+const CTE_LOGO='data:image/jpeg;base64,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';
+
 function money(v){
   if(v===null||v===undefined||v==='') return '';
   if(v==='/'||String(v).includes('%')) return v;
@@ -200,7 +202,7 @@ export default function Home(){
     return <div className="print-document">
       <div className="pq-header">
         <div className="pq-brand">
-          <img src={data.company?.logo||'/logo.jpg'} alt="CTE logo"/>
+          <img src={logoSrc} onError={e=>{e.currentTarget.src=CTE_LOGO}} alt="CTE logo"/>
           <div>
             <h1>{data.company?.name||'CTE MYANMAR CO.,LTD'}</h1>
             <p>{data.company?.address}</p>
@@ -266,6 +268,7 @@ export default function Home(){
 
   if(!data) return <main className="shell"><div className="loading">Loading CTE price list…</div></main>;
 
+  const logoSrc=(data.company?.logo && data.company.logo!=='/logo.jpg')?data.company.logo:CTE_LOGO;
   const item=viewer?.items?.[slide];
   const isImage=item && (item.type==='image'||/\.(png|jpe?g|webp|gif)(\?|$)/i.test(item.url||''));
 
@@ -274,7 +277,7 @@ export default function Home(){
       <header className="hero premium-hero">
         <div className="brand premium-brand">
           <div className="brand-logo-wrap">
-            <img src={data.company?.logo||'/logo.jpg'} alt="CTE"/>
+            <img src={logoSrc} onError={e=>{e.currentTarget.src=CTE_LOGO}} alt="CTE"/>
           </div>
           <div>
             <div className="brand-eyebrow">PHOTOVOLTAIC · ENERGY STORAGE</div>
@@ -334,8 +337,8 @@ export default function Home(){
       {sections.map((s)=>(
         <section key={s.name} className="section">
           <h3>{s.name}</h3>
-          <div className="table-wrap">
-            <table>
+          <div className="table-wrap customer-table-wrap">
+            <table className="price-table">
               <thead>
                 <tr>
                   {selectMode&&<th className="select-col no-print">✓</th>}
@@ -349,15 +352,15 @@ export default function Home(){
               <tbody>
                 {s.rows.map((r,ri)=>(
                   <tr key={r.id}>
-                    {selectMode&&<td className="select-col no-print"><input className="row-check" type="checkbox" checked={Boolean(selected[r.id])} onChange={()=>toggleProduct(r.id)}/></td>}
-                    <td>{ri+1}</td>
-                    <td className="spec">{r.spec}</td>
-                    <td className="preview-col">{renderPreviewCell(r)}</td>
-                    <td>{dualPrice(r.retail)}</td>
-                    <td>{dualPrice(r.installer)}</td>
-                    <td>{dualPrice(r.wholesale)}</td>
-                    <td>{dualPrice(r.rebate)}</td>
-                    <td className="remarks">{r.remarks}</td>
+                    {selectMode&&<td className="select-col no-print" data-label="Select"><input className="row-check" type="checkbox" checked={Boolean(selected[r.id])} onChange={()=>toggleProduct(r.id)}/></td>}
+                    <td data-label={labels.no}>{ri+1}</td>
+                    <td className="spec" data-label={labels.product}>{r.spec}</td>
+                    <td className="preview-col" data-label={labels.preview}>{renderPreviewCell(r)}</td>
+                    <td className="price-cell" data-label={s.heads[0]}>{dualPrice(r.retail)}</td>
+                    <td className="price-cell" data-label={s.heads[1]}>{dualPrice(r.installer)}</td>
+                    <td className="price-cell" data-label={s.heads[2]}>{dualPrice(r.wholesale)}</td>
+                    <td className="price-cell" data-label={s.heads[3]}>{dualPrice(r.rebate)}</td>
+                    <td className="remarks" data-label={labels.remarks}>{r.remarks}</td>
                   </tr>
                 ))}
               </tbody>
