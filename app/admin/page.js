@@ -33,8 +33,13 @@ export default function Admin(){
     setD(x=>{const n=cp(x);n.sections[si][k]=v;return n});
   }
 
-  function patchHead(si,hi,v){
-    setD(x=>{const n=cp(x);n.sections[si].heads[hi]=v;return n});
+  function patchColumn(si,ci,k,v){
+    setD(x=>{
+      const n=cp(x);
+      n.sections[si].columns=n.sections[si].columns||[];
+      n.sections[si].columns[ci]={...n.sections[si].columns[ci],[k]:v};
+      return n;
+    });
   }
 
   async function upload(si,ri,kind,file){
@@ -128,7 +133,7 @@ export default function Admin(){
       <div className="section-editor">
         <label>Section Title<input className="section-name" value={s.name} onChange={e=>patchSection(si,'name',e.target.value)}/></label>
         <div className="heading-grid section-headings">
-          {s.heads.map((h,hi)=><label key={hi}>Column {hi+1} heading<input value={h} onChange={e=>patchHead(si,hi,e.target.value)}/></label>)}
+          {(s.columns||[]).map((col,ci)=><label key={col.key}>Column {ci+1} heading<input value={col.label||''} onChange={e=>patchColumn(si,ci,'label',e.target.value)}/></label>)}
         </div>
       </div>
 
@@ -144,11 +149,8 @@ export default function Admin(){
         </div>
         <div className="fields">
           <label>Product Specification<input value={r.spec} onChange={e=>patch(si,ri,'spec',e.target.value)}/></label>
-          <div className="grid4">
-            <label>Price 1<input value={r.retail} onChange={e=>patch(si,ri,'retail',e.target.value)}/></label>
-            <label>Price 2<input value={r.installer} onChange={e=>patch(si,ri,'installer',e.target.value)}/></label>
-            <label>Price 3<input value={r.wholesale} onChange={e=>patch(si,ri,'wholesale',e.target.value)}/></label>
-            <label>Price 4<input value={r.rebate} onChange={e=>patch(si,ri,'rebate',e.target.value)}/></label>
+          <div className="dynamic-value-grid">
+            {(s.columns||[]).map(col=><label key={col.key}>{col.label}<input value={r[col.key]??''} onChange={e=>patch(si,ri,col.key,e.target.value)}/></label>)}
           </div>
           <label>Remarks<textarea value={r.remarks} onChange={e=>patch(si,ri,'remarks',e.target.value)}/></label>
           <label className="check"><input type="checkbox" checked={r.visible!==false} onChange={e=>patch(si,ri,'visible',e.target.checked)}/> Show to customers</label>
