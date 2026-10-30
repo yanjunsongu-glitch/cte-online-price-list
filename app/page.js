@@ -23,6 +23,9 @@ export default function Home(){
   const [currencyDisplay,setCurrencyDisplay]=useState('both');
   const [todayRate,setTodayRate]=useState('');
   const [settingsOpen,setSettingsOpen]=useState(false);
+  const [headerEditOpen,setHeaderEditOpen]=useState(false);
+  const [headerOverrides,setHeaderOverrides]=useState({});
+  const [headerDraft,setHeaderDraft]=useState({title:'',validity:'',note:''});
   const [shareOpen,setShareOpen]=useState(false);
   const [shareCustomer,setShareCustomer]=useState('');
   const [shareExpiry,setShareExpiry]=useState('7');
@@ -40,6 +43,14 @@ export default function Home(){
       setData(j);
       const saved=typeof window!=='undefined'?window.localStorage.getItem('cteTodayCnyMmkRate'):'';
       setTodayRate(saved||String(j.rate||''));
+      if(typeof window!=='undefined'){
+        try{
+          const h=JSON.parse(window.localStorage.getItem('cteStaffHeaderOverrides')||'{}');
+          setHeaderOverrides(h&&typeof h==='object'?h:{});
+        }catch{
+          setHeaderOverrides({});
+        }
+      }
     })
   },[]);
 
@@ -86,6 +97,9 @@ export default function Home(){
   };
 
   const rate1Label=data?.rateLabel1||'CNY / MMK';
+  const displayTitle=headerOverrides.title||data?.title||'CTE Price List';
+  const displayValidity=headerOverrides.validity||data?.validity||'';
+  const displayNote=headerOverrides.note||data?.note||'';
 
   function sectionColumns(section){
     if(Array.isArray(section.columns)) return section.columns;
@@ -132,6 +146,37 @@ export default function Home(){
   function updateTodayRate(v){
     setTodayRate(v);
     if(typeof window!=='undefined') window.localStorage.setItem('cteTodayCnyMmkRate',v);
+  }
+
+  function openHeaderEditor(){
+    setHeaderDraft({
+      title:displayTitle,
+      validity:displayValidity,
+      note:displayNote
+    });
+    setHeaderEditOpen(true);
+  }
+
+  function saveHeaderEdits(){
+    const next={
+      title:String(headerDraft.title||'').trim(),
+      validity:String(headerDraft.validity||'').trim(),
+      note:String(headerDraft.note||'').trim()
+    };
+    setHeaderOverrides(next);
+    if(typeof window!=='undefined')window.localStorage.setItem('cteStaffHeaderOverrides',JSON.stringify(next));
+    setHeaderEditOpen(false);
+  }
+
+  function resetHeaderEdits(){
+    setHeaderOverrides({});
+    setHeaderDraft({
+      title:data?.title||'CTE Price List',
+      validity:data?.validity||'',
+      note:data?.note||''
+    });
+    updateTodayRate(String(data?.rate||''));
+    if(typeof window!=='undefined')window.localStorage.removeItem('cteStaffHeaderOverrides');
   }
 
   function dualPrice(v,print=false){
@@ -252,9 +297,9 @@ export default function Home(){
 
     const snapshot={
       version:1,
-      title:data.title||'CTE Price List',
-      validity:data.validity||'',
-      note:data.note||'',
+      title:displayTitle,
+      validity:displayValidity,
+      note:displayNote,
       currency:data.currency||'RMB',
       currencyDisplay,
       exchangeRate:todayRate||'',
@@ -364,13 +409,13 @@ export default function Home(){
         </div>
         <div className="pc-head-right">
           <div className="pc-kicker">CUSTOMER PRICE LIST</div>
-          <h2>{data.title||'CTE Price List'}</h2>
-          <div className="pc-validity">{data.validity}</div>
+          <h2>{displayTitle}</h2>
+          <div className="pc-validity">{displayValidity}</div>
           {todayRate && <div className="pc-rate">Today&apos;s {rate1Label}: <b>{todayRate}</b></div>}
         </div>
       </div>
 
-      <div className="pc-note">{data.note}</div>
+      <div className="pc-note">{displayNote}</div>
 
       {printSections.map((section,si)=>{
         const startNo=printSections.slice(0,si).reduce((n,x)=>n+x.rows.length,0);
@@ -433,12 +478,13 @@ export default function Home(){
         </div>
         <div className="title premium-title">
           <div className="price-list-badge">LIVE PRICE LIST</div>
-          <h2>{data.title||'CTE Price List'}</h2>
-          <div className="validity-line">{data.validity}</div>
+          <button className="header-edit-button no-print" onClick={openHeaderEditor}>✎ Edit Header</button>
+          <h2>{displayTitle}</h2>
+          <div className="validity-line">{displayValidity}</div>
           <div className="rate-pills">
             {todayRate && <span><b>Today's {rate1Label}</b>{todayRate}</span>}
           </div>
-          <div className="note">{data.note}</div>
+          <div className="note">{displayNote}</div>
         </div>
       </header>
 
@@ -460,6 +506,44 @@ export default function Home(){
         <button onClick={selectAllVisible}>Select all visible</button>
         <button onClick={clearVisible}>Clear</button>
         <span>Select only the products you want to send to the customer.</span>
+      </div>}
+
+      {headerEditOpen && <div className="header-editor-overlay no-print" onClick={()=>setHeaderEditOpen(false)}>
+        <div className="header-editor-card" onClick={e=>e.stopPropagation()}>
+          <div className="header-editor-head">
+            <div>
+              <span>STAFF DISPLAY EDIT</span>
+              <h3>Edit Price List Header</h3>
+              <p>These changes affect this device, printing and customer share links only.</p>
+            </div>
+            <button onClick={()=>setHeaderEditOpen(false)}>×</button>
+          </div>
+
+          <div className="header-editor-fields">
+            <label>Price List Title
+              <input value={headerDraft.title} onChange={e=>setHeaderDraft(x=>({...x,title:e.target.value}))}/>
+            </label>
+            <label>Validity
+              <input value={headerDraft.validity} onChange={e=>setHeaderDraft(x=>({...x,validity:e.target.value}))}/>
+            </label>
+            <label>Today&apos;s CNY → MMK
+              <input type="number" min="0" step="0.01" value={todayRate} onChange={e=>updateTodayRate(e.target.value)}/>
+            </label>
+            <label className="header-note-field">Top Note
+              <textarea value={headerDraft.note} onChange={e=>setHeaderDraft(x=>({...x,note:e.target.value}))}/>
+            </label>
+          </div>
+
+          <div className="header-editor-info">
+            Admin master data will not be changed.
+          </div>
+
+          <div className="header-editor-actions">
+            <button className="header-reset" onClick={resetHeaderEdits}>Reset to Admin Default</button>
+            <button className="header-cancel" onClick={()=>setHeaderEditOpen(false)}>Cancel</button>
+            <button className="header-save" onClick={saveHeaderEdits}>Save</button>
+          </div>
+        </div>
       </div>}
 
       {settingsOpen && <div className="display-settings-overlay no-print" onClick={()=>setSettingsOpen(false)}>
