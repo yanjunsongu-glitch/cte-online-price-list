@@ -19,10 +19,11 @@ export default function Home(){
   const [selectMode,setSelectMode]=useState(false);
   const [selected,setSelected]=useState({});
   const [printMode,setPrintMode]=useState(null);
-  const [printPriceLevel,setPrintPriceLevel]=useState('retail');
+  const [selectedColumnKeys,setSelectedColumnKeys]=useState(['retail','installer','wholesale','packageDiscount','repeatDiscount','specialDiscount']);
   const [currencyDisplay,setCurrencyDisplay]=useState('both');
   const [todayRate,setTodayRate]=useState('');
   const stageRef=useRef(null);
+  const toolbarRef=useRef(null);
   const dragRef=useRef(null);
 
   useEffect(()=>{
@@ -74,12 +75,33 @@ export default function Home(){
     }));
   }
 
-  function printColumns(section){
-    const cols=sectionColumns(section);
-    if(printPriceLevel==='all') return cols;
-    const limit={retail:1,installer:2,wholesale:3}[printPriceLevel]||1;
-    return cols.filter(c=>c.type==='price').slice(0,limit);
+  function visibleColumns(section){
+    return sectionColumns(section).filter(col=>selectedColumnKeys.includes(col.key));
   }
+
+  function toggleColumn(key){
+    setSelectedColumnKeys(keys=>keys.includes(key)?keys.filter(k=>k!==key):[...keys,key]);
+  }
+
+  function selectAllColumns(){
+    const keys=Array.from(new Set((data?.sections||[]).flatMap(s=>sectionColumns(s).map(c=>c.key))));
+    setSelectedColumnKeys(keys);
+  }
+
+  function clearColumns(){
+    setSelectedColumnKeys([]);
+  }
+
+  const columnChoices=useMemo(()=>{
+    if(!data) return [];
+    const map=new Map();
+    for(const section of data.sections||[]){
+      for(const col of sectionColumns(section)){
+        if(!map.has(col.key)) map.set(col.key,{key:col.key,label:col.label,type:col.type});
+      }
+    }
+    return Array.from(map.values());
+  },[data]);
 
   function renderValue(row,col,print=false){
     const v=row?.[col.key];
@@ -192,6 +214,14 @@ export default function Home(){
     setSelected(next);
   }
 
+  function scrollToolbar(e){
+    const el=toolbarRef.current;
+    if(!el || el.scrollWidth<=el.clientWidth) return;
+    if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){
+      el.scrollLeft+=e.deltaY;
+    }
+  }
+
   function beginPrint(mode){
     if(mode==='selected'){
       const count=Object.values(selected).filter(Boolean).length;
@@ -236,7 +266,7 @@ export default function Home(){
 
       <div className="pq-titlebar">
         <strong>{data.printTitle||'Product Quotation'}</strong>
-        <span>{printPriceLevel==='retail'?'RETAIL':printPriceLevel==='installer'?'FOR INSTALLERS':printPriceLevel==='wholesale'?'FOR WHOLESALE':'FULL PRICE LIST'}</span>
+        <span>{selectedColumnKeys.length?selectedColumnKeys.map(k=>k.replace(/([A-Z])/g,' $1')).join(' + ').toUpperCase():'CUSTOM'}</span>
       </div>
 
       <div className="pq-note">{data.note||'Prices exclude installation charges.'}</div>
@@ -262,7 +292,7 @@ export default function Home(){
               <th>{labels.no}</th>
               <th>{labels.product}</th>
               <th>{data.printImageLabel||'Product Image'}</th>
-              {printColumns(section).map((col,i)=><th key={col.key}>{col.label}{col.type==='price'?<><br/>{data.currency||'CNY'}</>:null}</th>)}
+              {visibleColumns(section).map((col,i)=><th key={col.key}>{col.label}{col.type==='price'?<><br/>{data.currency||'CNY'}</>:null}</th>)}
               <th>{labels.remarks}</th>
             </tr>
           </thead>
@@ -271,7 +301,7 @@ export default function Home(){
               <td>{startNo+ri+1}</td>
               <td className="pq-spec">{r.spec}</td>
               <td className="pq-image-cell">{r.image?<img src={r.image} alt=""/>:'-'}</td>
-              {printColumns(section).map(col=><td className={col.type==='price'?'pq-price':'pq-discount'} key={col.key}>{renderValue(r,col,true)}</td>)}
+              {visibleColumns(section).map(col=><td className={col.type==='price'?'pq-price':'pq-discount'} key={col.key}>{renderValue(r,col,true)}</td>)}
               <td className="pq-remarks">{r.remarks}</td>
             </tr>)}
           </tbody>
@@ -316,18 +346,27 @@ export default function Home(){
         </div>
       </header>
 
-      <div className="toolbar no-print">
-        <input placeholder="Search product…" value={q} onChange={e=>setQ(e.target.value)}/>
+      <div ref={toolbarRef} className="toolbar toolbar-scroll no-print" onWheel={scrollToolbar}>
+        <input className="toolbar-search" placeholder="Search product…" value={q} onChange={e=>setQ(e.target.value)}/>
         <button className={selectMode?'secondary-active':''} onClick={()=>setSelectMode(x=>!x)}>{selectMode?'Done Selecting':'Select Products'}</button>
-        <label className="print-level-control">
-          <span>Price Level</span>
-          <select value={printPriceLevel} onChange={e=>setPrintPriceLevel(e.target.value)}>
-            <option value="retail">Retail only</option>
-            <option value="installer">Retail + Installer</option>
-            <option value="wholesale">Retail + Installer + Wholesale</option>
-            <option value="all">All prices + discounts</option>
-          </select>
-        </label>
+
+        <details className="column-picker">
+          <summary>
+            <span>Price Columns</span>
+            <b>{selectedColumnKeys.length} selected</b>
+          </summary>
+          <div className="column-picker-menu">
+            <div className="column-picker-actions">
+              <button type="button" onClick={selectAllColumns}>Select all</button>
+              <button type="button" onClick={clearColumns}>Clear</button>
+            </div>
+            {columnChoices.map(col=><label key={col.key}>
+              <input type="checkbox" checked={selectedColumnKeys.includes(col.key)} onChange={()=>toggleColumn(col.key)}/>
+              <span>{col.label}</span>
+            </label>)}
+          </div>
+        </details>
+
         <label className="print-level-control currency-display-control">
           <span>Currency Display</span>
           <select value={currencyDisplay} onChange={e=>setCurrencyDisplay(e.target.value)}>
@@ -365,7 +404,7 @@ export default function Home(){
                   <th>{labels.no}</th>
                   <th>{labels.product}</th>
                   <th>{labels.preview}</th>
-                  {sectionColumns(s).map(col=><th key={col.key}>{col.label}</th>)}
+                  {visibleColumns(s).map(col=><th key={col.key}>{col.label}</th>)}
                   <th>{labels.remarks}</th>
                 </tr>
               </thead>
@@ -376,7 +415,7 @@ export default function Home(){
                     <td data-label={labels.no}>{startNo+ri+1}</td>
                     <td className="spec" data-label={labels.product}>{r.spec}</td>
                     <td className="preview-col" data-label={labels.preview}>{renderPreviewCell(r)}</td>
-                    {sectionColumns(s).map(col=><td key={col.key} className={col.type==='price'?'price-cell':'discount-cell'} data-label={col.label}>{renderValue(r,col)}</td>)}
+                    {visibleColumns(s).map(col=><td key={col.key} className={col.type==='price'?'price-cell':'discount-cell'} data-label={col.label}>{renderValue(r,col)}</td>)}
                     <td className="remarks" data-label={labels.remarks}>{r.remarks}</td>
                   </tr>
                 ))}
