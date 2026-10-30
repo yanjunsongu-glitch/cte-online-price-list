@@ -1367,3 +1367,488 @@ footer{text-align:center;padding:24px;color:#7b8791}
   padding:7px!important;
   background:#f8fbff;
 }
+
+
+/* ===== Customer UI redesign v4 ===== */
+:root{
+  --font-sans: Inter, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --brand-blue:#0b4f96;
+  --brand-blue-2:#0a66c2;
+  --brand-red:#e62b2f;
+  --ink:#15263a;
+  --muted-2:#607286;
+  --panel:#f7fafe;
+  --panel-2:#eef4fb;
+  --border:#d9e4ef;
+}
+body{
+  font-family:var(--font-sans)!important;
+  background:#edf3f8!important;
+  color:var(--ink)!important;
+}
+.shell{
+  max-width:1600px!important;
+  border-radius:0 0 18px 18px;
+  overflow:hidden;
+}
+.premium-hero{
+  min-height:190px;
+  align-items:center;
+  padding:34px 42px!important;
+}
+.brand-logo-wrap{
+  width:104px!important;
+  height:104px!important;
+  border-radius:24px!important;
+  background:#fff!important;
+}
+.brand-logo-wrap img{
+  width:82px!important;
+  height:82px!important;
+}
+.brand-eyebrow{
+  font-size:10px!important;
+  letter-spacing:2px!important;
+  margin-bottom:8px!important;
+}
+.premium-brand h1{
+  font-size:28px!important;
+  line-height:1.15!important;
+  font-weight:800!important;
+  letter-spacing:-.3px!important;
+}
+.premium-brand p{
+  font-size:13px!important;
+  line-height:1.45!important;
+  color:#5a6a7a!important;
+}
+.premium-title h2{
+  font-size:34px!important;
+  font-weight:800!important;
+  letter-spacing:-.8px!important;
+}
+.price-list-badge{
+  font-size:10px!important;
+  padding:7px 11px!important;
+}
+.toolbar{
+  gap:10px!important;
+  padding:14px 28px!important;
+  background:rgba(255,255,255,.96)!important;
+  backdrop-filter:blur(14px);
+  box-shadow:0 10px 28px rgba(27,55,88,.07);
+}
+.toolbar input{
+  border-radius:12px!important;
+  min-height:42px;
+}
+.toolbar button,.toolbar a{
+  border-radius:12px!important;
+  min-height:42px;
+  font-weight:700!important;
+}
+.section{
+  padding:12px 24px 26px!important;
+}
+.section h3{
+  padding:12px 16px!important;
+  font-size:15px!important;
+  font-weight:800!important;
+  letter-spacing:.1px;
+  border-radius:12px 12px 0 0!important;
+}
+.customer-table-wrap{
+  border:1px solid var(--border);
+  border-top:0;
+  border-radius:0 0 14px 14px;
+  overflow:auto;
+  box-shadow:0 8px 24px rgba(30,66,102,.05);
+}
+.price-table{
+  min-width:1120px;
+  background:#fff;
+}
+.price-table th{
+  padding:13px 10px!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  line-height:1.35!important;
+  background:#eaf2fb!important;
+  color:#123f6e!important;
+  border-color:#a9bacb!important;
+}
+.price-table td{
+  padding:11px 10px!important;
+  font-size:12px!important;
+  border-color:#bcc9d6!important;
+}
+.price-table tbody tr{
+  transition:background .15s ease;
+}
+.price-table tbody tr:hover td{
+  background:#f8fbff;
+}
+.price-table .spec{
+  font-size:13px!important;
+  font-weight:800!important;
+  color:#173d63!important;
+}
+.preview-col{
+  min-width:165px!important;
+}
+.thumb-frame{
+  width:142px!important;
+  height:116px!important;
+  background:#fbfdff!important;
+  border:1px solid #d5e1ec!important;
+  box-shadow:inset 0 0 0 1px #fff;
+}
+.image-btn span{
+  margin-top:6px;
+  font-size:12px!important;
+}
+.price-cell{
+  min-width:145px;
+}
+.dual-price{
+  gap:6px!important;
+}
+.price-cny{
+  font-size:16px!important;
+  color:#173d63!important;
+}
+.price-mmk{
+  font-size:12px!important;
+  color:#cf3b2d!important;
+}
+.remarks{
+  font-size:12px!important;
+  line-height:1.5!important;
+  color:#35475a!important;
+}
+.rate-pills span{
+  font-size:12px!important;
+}
+.today-rate-control,.print-level-control{
+  min-height:42px;
+}
+.today-rate-control input{
+  height:30px;
+}
+.selection-bar{
+  box-shadow:0 6px 18px rgba(20,62,102,.05);
+}
+.viewer-head strong{
+  font-size:17px;
+}
+.viewer-nav{
+  font-size:13px;
+}
+footer{
+  font-size:12px;
+}
+
+/* Tablet */
+@media(max-width:1024px){
+  .premium-hero{
+    padding:26px 22px!important;
+    gap:20px!important;
+  }
+  .premium-title h2{
+    font-size:28px!important;
+  }
+  .brand-logo-wrap{
+    width:86px!important;
+    height:86px!important;
+  }
+  .brand-logo-wrap img{
+    width:68px!important;
+    height:68px!important;
+  }
+  .toolbar{
+    padding:12px 16px!important;
+  }
+}
+
+/* Mobile: same data, reflowed from table into vertical blocks */
+@media(max-width:720px){
+  body{
+    background:#f3f6f9!important;
+  }
+  .shell{
+    width:100%!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+  }
+  .premium-hero{
+    min-height:0;
+    padding:18px 16px 20px!important;
+    flex-direction:column!important;
+    align-items:flex-start!important;
+    background:linear-gradient(155deg,#fff 0%,#f2f7fc 100%)!important;
+  }
+  .premium-brand{
+    width:100%;
+    align-items:center!important;
+    gap:12px!important;
+  }
+  .brand-logo-wrap{
+    width:68px!important;
+    height:68px!important;
+    border-radius:18px!important;
+    box-shadow:0 8px 22px rgba(11,79,150,.11)!important;
+  }
+  .brand-logo-wrap img{
+    width:54px!important;
+    height:54px!important;
+  }
+  .brand-eyebrow{
+    font-size:8px!important;
+    letter-spacing:1.25px!important;
+    margin-bottom:4px!important;
+  }
+  .premium-brand h1{
+    font-size:18px!important;
+    margin:0 0 4px!important;
+  }
+  .premium-brand p{
+    font-size:10px!important;
+    line-height:1.35!important;
+    margin:2px 0!important;
+  }
+  .premium-title{
+    width:100%;
+    align-items:flex-start!important;
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px solid #dce6f0;
+  }
+  .price-list-badge{
+    font-size:8px!important;
+    padding:5px 8px!important;
+  }
+  .premium-title h2{
+    font-size:26px!important;
+    margin:6px 0!important;
+  }
+  .validity-line{
+    font-size:11px!important;
+  }
+  .rate-pills{
+    margin:7px 0 2px!important;
+  }
+  .rate-pills span{
+    font-size:10px!important;
+    padding:6px 8px!important;
+  }
+  .premium-title .note{
+    font-size:10px!important;
+    line-height:1.4!important;
+  }
+
+  .toolbar{
+    position:static!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr;
+    gap:9px!important;
+    padding:12px!important;
+    box-shadow:none!important;
+    border-bottom:1px solid #dce6ef!important;
+  }
+  .toolbar>input{
+    grid-column:1 / -1;
+    width:100%!important;
+    min-width:0!important;
+  }
+  .toolbar .print-level-control,
+  .toolbar .today-rate-control{
+    grid-column:1 / -1;
+    width:100%!important;
+  }
+  .toolbar .print-level-control{
+    justify-content:space-between;
+  }
+  .toolbar .print-level-control select{
+    flex:1;
+  }
+  .today-rate-control{
+    display:grid!important;
+    grid-template-columns:1fr auto;
+  }
+  .today-rate-control span{
+    grid-column:1 / -1;
+  }
+  .today-rate-control input{
+    width:100%!important;
+  }
+  .toolbar button,.toolbar a{
+    width:100%!important;
+    min-height:42px;
+  }
+  .selection-bar{
+    margin:10px 12px 0!important;
+  }
+
+  .section{
+    padding:10px 12px 20px!important;
+  }
+  .section h3{
+    border-radius:12px!important;
+    margin-bottom:10px!important;
+    font-size:14px!important;
+  }
+  .customer-table-wrap{
+    border:0!important;
+    box-shadow:none!important;
+    overflow:visible!important;
+    background:transparent!important;
+  }
+  .price-table{
+    display:block;
+    min-width:0!important;
+    width:100%!important;
+    background:transparent!important;
+  }
+  .price-table thead{
+    display:none!important;
+  }
+  .price-table tbody{
+    display:grid;
+    gap:12px;
+  }
+  .price-table tr{
+    display:grid!important;
+    grid-template-columns:1fr 1fr;
+    gap:0;
+    background:#fff!important;
+    border:1px solid #dce5ee;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 8px 22px rgba(27,55,88,.06);
+  }
+  .price-table td{
+    display:flex!important;
+    flex-direction:column;
+    align-items:flex-start!important;
+    justify-content:center;
+    min-height:68px;
+    padding:11px 12px!important;
+    border:0!important;
+    border-bottom:1px solid #edf1f5!important;
+    border-right:1px solid #edf1f5!important;
+    text-align:left!important;
+    min-width:0!important;
+  }
+  .price-table td::before{
+    content:attr(data-label);
+    display:block;
+    margin-bottom:6px;
+    color:#738295;
+    font-size:9px;
+    line-height:1.2;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.45px;
+  }
+  .price-table td:nth-child(even){
+    border-right:0!important;
+  }
+  .price-table td.spec,
+  .price-table td.preview-col,
+  .price-table td.remarks{
+    grid-column:1 / -1;
+    border-right:0!important;
+  }
+  .price-table td.spec{
+    min-height:56px;
+    background:#f8fbff!important;
+    font-size:15px!important;
+  }
+  .price-table td.preview-col{
+    align-items:center!important;
+    background:#fff!important;
+  }
+  .price-table td.preview-col::before{
+    align-self:flex-start;
+  }
+  .thumb-frame{
+    width:min(240px,74vw)!important;
+    height:170px!important;
+  }
+  .price-table .price-cell{
+    min-width:0!important;
+  }
+  .price-cny{
+    font-size:15px!important;
+  }
+  .price-mmk{
+    font-size:11px!important;
+  }
+  .price-table td.remarks{
+    min-height:auto;
+    font-size:12px!important;
+    line-height:1.5!important;
+  }
+  .select-col{
+    grid-column:1 / -1!important;
+    min-width:0!important;
+    width:auto!important;
+  }
+  .row-check{
+    width:20px!important;
+    height:20px!important;
+  }
+  footer{
+    padding:18px 12px!important;
+    font-size:10px!important;
+  }
+
+  .modal{
+    padding:0!important;
+  }
+  .viewer-v2{
+    width:100vw!important;
+    height:100dvh!important;
+    border-radius:0!important;
+  }
+  .viewer-head{
+    padding:10px 12px!important;
+  }
+  .viewer-head strong{
+    font-size:14px!important;
+  }
+  .viewer-actions{
+    gap:5px!important;
+  }
+  .viewer-actions button,.open-file-tab{
+    height:32px!important;
+    min-width:32px!important;
+    padding:0 8px!important;
+    font-size:11px!important;
+  }
+  .viewer-nav{
+    padding:10px 12px!important;
+    font-size:11px!important;
+  }
+}
+
+/* Very small phones */
+@media(max-width:420px){
+  .toolbar{
+    grid-template-columns:1fr;
+  }
+  .toolbar>*{
+    grid-column:1!important;
+  }
+  .price-table tr{
+    grid-template-columns:1fr;
+  }
+  .price-table td{
+    border-right:0!important;
+  }
+  .price-table td.spec,
+  .price-table td.preview-col,
+  .price-table td.remarks{
+    grid-column:1!important;
+  }
+}
