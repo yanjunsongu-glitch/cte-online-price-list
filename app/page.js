@@ -23,6 +23,14 @@ export default function Home(){
   const [currencyDisplay,setCurrencyDisplay]=useState('both');
   const [todayRate,setTodayRate]=useState('');
   const [settingsOpen,setSettingsOpen]=useState(false);
+  const [shareOpen,setShareOpen]=useState(false);
+  const [shareCustomer,setShareCustomer]=useState('');
+  const [shareExpiry,setShareExpiry]=useState('7');
+  const [shareOptions,setShareOptions]=useState({
+    images:true,remarks:true,datasheets:true,rate:false,print:true,companyDetails:true
+  });
+  const [shareResult,setShareResult]=useState(null);
+  const [shareMsg,setShareMsg]=useState('');
   const stageRef=useRef(null);
   const toolbarRef=useRef(null);
   const dragRef=useRef(null);
@@ -235,6 +243,88 @@ export default function Home(){
     }
   }
 
+  async function createCustomerShare(){
+    if(!data)return;
+    const selectedIds=Object.keys(selected).filter(id=>selected[id]);
+    const useSelected=selectedIds.length>0;
+    const allowed=new Set(useSelected?selectedIds:visibleIds);
+    const columnSet=new Set(selectedColumnKeys);
+
+    const snapshot={
+      version:1,
+      title:data.title||'CTE Price List',
+      validity:data.validity||'',
+      note:data.note||'',
+      currency:data.currency||'RMB',
+      currencyDisplay,
+      exchangeRate:todayRate||'',
+      rateLabel:data.rateLabel1||'CNY / MMK',
+      selectedColumnKeys:[...selectedColumnKeys],
+      labels:{...(data.labels||{})},
+      company:{
+        name:data.company?.name||'CTE MYANMAR CO.,LTD',
+        logo:data.company?.logo||'',
+        address:shareOptions.companyDetails?(data.company?.address||''):'',
+        tel:shareOptions.companyDetails?(data.company?.tel||''):''
+      },
+      options:{...shareOptions},
+      sections:(data.sections||[]).map(section=>{
+        const columns=sectionColumns(section).filter(col=>columnSet.has(col.key));
+        const rows=(section.rows||[]).filter(r=>r.visible!==false&&allowed.has(r.id)).map(r=>{
+          const row={
+            id:r.id,
+            spec:r.spec,
+            image:shareOptions.images?(r.image||''):'',
+            remarks:shareOptions.remarks?(r.remarks||''):'',
+            datasheets:shareOptions.datasheets?(r.datasheets||[]):[]
+          };
+          for(const col of columns)row[col.key]=r[col.key]??'';
+          return row;
+        });
+        return {name:section.name,columns,rows};
+      }).filter(s=>s.rows.length)
+    };
+
+    if(!snapshot.sections.length){
+      setShareMsg('Please select at least one product.');
+      return;
+    }
+    if(!snapshot.selectedColumnKeys.length){
+      setShareMsg('Please select at least one price or discount column.');
+      return;
+    }
+
+    setShareMsg('Creating secure customer link…');
+    setShareResult(null);
+    const r=await fetch('/api/admin/shares',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        snapshot,
+        customerName:shareCustomer,
+        expiryDays:shareExpiry
+      })
+    });
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){
+      setShareMsg(r.status===401?'Please login as staff/admin first.':(j.error||'Could not create link.'));
+      return;
+    }
+    const url=window.location.origin+'/share/'+j.token;
+    setShareResult({url,expiresAt:j.expiresAt});
+    setShareMsg('Customer link created.');
+  }
+
+  async function copyShareLink(){
+    if(!shareResult?.url)return;
+    try{
+      await navigator.clipboard.writeText(shareResult.url);
+      setShareMsg('Link copied.');
+    }catch{
+      setShareMsg('Copy the link manually below.');
+    }
+  }
+
   function beginPrint(mode){
     if(mode==='selected'){
       const count=Object.values(selected).filter(Boolean).length;
@@ -359,6 +449,7 @@ export default function Home(){
           <span>Display Settings</span>
           <small>{selectedColumnKeys.length} columns · {currencyDisplay==='cny'?'CNY':currencyDisplay==='mmk'?'MMK':'CNY + MMK'}</small>
         </button>
+        <button className="create-share-btn" onClick={()=>{setShareOpen(true);setShareResult(null);setShareMsg('')}}>Create Customer Link</button>
         <button onClick={()=>beginPrint('all')}>Print All</button>
         <button className="print-selected-btn" onClick={()=>beginPrint('selected')}>Print Selected</button>
         <a href="/admin">Staff Login</a>
@@ -482,6 +573,70 @@ export default function Home(){
       })}
 
       <footer>{data.company?.name} · Online price list</footer>
+
+      {shareOpen && <div className="share-overlay no-print" onClick={()=>setShareOpen(false)}>
+        <div className="share-dialog" onClick={e=>e.stopPropagation()}>
+          <div className="share-dialog-head">
+            <div>
+              <span>CUSTOMER SHARE</span>
+              <h3>Create Customer Link</h3>
+              <p>Only the selected products and information will be included.</p>
+            </div>
+            <button onClick={()=>setShareOpen(false)}>×</button>
+          </div>
+
+          <div className="share-summary">
+            <div><span>Products</span><b>{Object.values(selected).filter(Boolean).length||visibleIds.length}</b></div>
+            <div><span>Columns</span><b>{selectedColumnKeys.length}</b></div>
+            <div><span>Currency</span><b>{currencyDisplay==='cny'?'CNY':currencyDisplay==='mmk'?'MMK':'CNY + MMK'}</b></div>
+          </div>
+
+          <div className="share-fields">
+            <label>Customer / Company name (optional)
+              <input value={shareCustomer} onChange={e=>setShareCustomer(e.target.value)} placeholder="e.g. ABC Solar"/>
+            </label>
+            <label>Link expires
+              <select value={shareExpiry} onChange={e=>setShareExpiry(e.target.value)}>
+                <option value="1">1 day</option>
+                <option value="7">7 days</option>
+                <option value="30">30 days</option>
+                <option value="never">Never</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="share-options">
+            {[
+              ['images','Product Images'],
+              ['remarks','Remarks'],
+              ['datasheets','Datasheets'],
+              ['rate','Exchange Rate'],
+              ['print','Print / PDF button'],
+              ['companyDetails','Company Address / Phone']
+            ].map(([key,label])=><label key={key} className={shareOptions[key]?'share-option active':'share-option'}>
+              <input type="checkbox" checked={Boolean(shareOptions[key])} onChange={e=>setShareOptions(x=>({...x,[key]:e.target.checked}))}/>
+              <span>{label}</span>
+            </label>)}
+          </div>
+
+          <div className="share-security-note">
+            Hidden columns are not stored in the customer share snapshot.
+          </div>
+
+          {shareResult && <div className="share-result">
+            <span>Customer Link</span>
+            <input readOnly value={shareResult.url}/>
+            <button onClick={copyShareLink}>Copy Link</button>
+            {shareResult.expiresAt&&<small>Expires: {new Date(shareResult.expiresAt).toLocaleString()}</small>}
+          </div>}
+
+          <div className="share-msg">{shareMsg}</div>
+          <div className="share-actions">
+            <button className="share-cancel" onClick={()=>setShareOpen(false)}>Close</button>
+            <button className="share-create" onClick={createCustomerShare}>Create Link</button>
+          </div>
+        </div>
+      </div>}
 
       {viewer && (
         <div className="modal no-print" onClick={()=>setViewer(null)}>
