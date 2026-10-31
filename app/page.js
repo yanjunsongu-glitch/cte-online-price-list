@@ -55,6 +55,16 @@ export default function Home(){
   },[]);
 
   useEffect(()=>{
+    if(!data||typeof window==='undefined')return;
+    const params=new URLSearchParams(window.location.search);
+    if(params.get('share')!=='true')return;
+    setShareOpen(true);
+    setShareResult(null);
+    setShareMsg('');
+    window.history.replaceState({},'',window.location.pathname);
+  },[data]);
+
+  useEffect(()=>{
     const done=()=>setPrintMode(null);
     window.addEventListener('afterprint',done);
     return ()=>window.removeEventListener('afterprint',done);
