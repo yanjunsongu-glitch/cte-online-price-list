@@ -56,19 +56,47 @@ function StatusCard({icon,label,value,sub,accent='neutral',href}){
 
 export default function SystemDashboard(){
   const [dash,setDash]=useState(null);
+  const [catalog,setCatalog]=useState(null);
   const [loading,setLoading]=useState(true);
+  const [accountOpen,setAccountOpen]=useState(false);
 
   useEffect(()=>{
-    fetch('/api/system/dashboard',{cache:'no-store'})
-      .then(r=>r.json())
-      .then(j=>setDash(j))
-      .catch(()=>setDash(null))
-      .finally(()=>setLoading(false));
+    let active=true;
+    Promise.allSettled([
+      fetch('/api/system/dashboard',{cache:'no-store'}).then(r=>r.ok?r.json():null),
+      fetch('/api/catalog',{cache:'no-store'}).then(r=>r.ok?r.json():null)
+    ]).then(results=>{
+      if(!active)return;
+      const dashboard=results[0].status==='fulfilled'?results[0].value:null;
+      const liveCatalog=results[1].status==='fulfilled'?results[1].value:null;
+      setDash(dashboard);
+      setCatalog(liveCatalog);
+      setLoading(false);
+    });
+    return ()=>{active=false};
   },[]);
+
+  useEffect(()=>{
+    if(!accountOpen)return;
+    const onKey=e=>{if(e.key==='Escape')setAccountOpen(false)};
+    const onClick=e=>{
+      if(!e.target.closest('.account-menu-wrap'))setAccountOpen(false);
+    };
+    window.addEventListener('keydown',onKey);
+    window.addEventListener('pointerdown',onClick);
+    return ()=>{
+      window.removeEventListener('keydown',onKey);
+      window.removeEventListener('pointerdown',onClick);
+    };
+  },[accountOpen]);
 
   const role=dash?.role||'Guest';
   const username=dash?.username||'Team Member';
-  const rate=dash?.catalog?.rate;
+  const liveCatalog=catalog||dash?.catalog||null;
+  const rate=liveCatalog?.rate;
+  const activeProductCount=catalog
+    ? (catalog.sections||[]).reduce((sum,s)=>sum+(s.rows||[]).filter(r=>r.visible!==false).length,0)
+    : dash?.catalog?.activeProductCount;
   const quotation=dash?.quotations;
   const finance=dash?.finance;
 
@@ -120,10 +148,37 @@ export default function SystemDashboard(){
         <a href="/warehouse">Warehouse</a>
       </nav>
 
-      <div className="account-chip">
-        <div className="account-avatar">{username==='Team Member'?'T':username.slice(0,1).toUpperCase()}</div>
-        <div><strong>{username}</strong><span>{role}</span></div>
-        {dash?.permissions?.admin&&<a href="/admin" aria-label="Open admin">⋯</a>}
+      <div className="account-menu-wrap">
+        <button className={accountOpen?'account-chip is-open':'account-chip'} onClick={()=>setAccountOpen(x=>!x)} aria-expanded={accountOpen}>
+          <div className="account-avatar">{username==='Team Member'?'T':username.slice(0,1).toUpperCase()}</div>
+          <div><strong>{username}</strong><span>{role}</span></div>
+          <span className="account-chevron">⌄</span>
+        </button>
+
+        {accountOpen&&<div className="account-menu">
+          <div className="account-menu-head">
+            <div className="account-menu-avatar">{username==='Team Member'?'T':username.slice(0,1).toUpperCase()}</div>
+            <div><strong>{username}</strong><span>{role==='Guest'?'Not signed in':role}</span></div>
+          </div>
+
+          <div className="account-menu-section">
+            <span>WORKSPACE</span>
+            <a href="/"><b>Price List</b><small>Open current prices</small></a>
+            <a href="/quotation">
+              <b>{dash?.permissions?.quotation?'Quotations':'Sign in to Quotations'}</b>
+              <small>{dash?.permissions?.quotation?'Open sales workspace':'Sales access required'}</small>
+            </a>
+            <a href="/finance">
+              <b>{dash?.permissions?.finance?'Finance':'Sign in to Finance'}</b>
+              <small>{dash?.permissions?.finance?'Open finance workspace':'Finance access required'}</small>
+            </a>
+            <a href="/warehouse"><b>Warehouse</b><small>Preview inventory module</small></a>
+          </div>
+
+          <div className="account-menu-admin">
+            <a href="/admin"><span>Admin Console</span><small>{dash?.permissions?.admin?'Super Admin access':'Restricted access'}</small></a>
+          </div>
+        </div>}
       </div>
     </header>
 
@@ -143,16 +198,16 @@ export default function SystemDashboard(){
         <StatusCard
           icon="rate"
           label="CNY → MMK"
-          value={rate?('1 CNY = '+Number(rate).toLocaleString('en-US')):'—'}
-          sub={rate?'Current price-list baseline':'No rate configured'}
+          value={rate?('1 CNY = '+Number(rate).toLocaleString('en-US')+' MMK'):(loading?'Checking rate…':'Rate unavailable')}
+          sub={rate?'Current price-list baseline':'Open Price List to configure rate'}
           accent="purple"
           href="/"
         />
         <StatusCard
           icon="price"
           label="Price List"
-          value={dash?.catalog?.activeProductCount!==undefined?dash.catalog.activeProductCount+' active products':'—'}
-          sub={dash?.catalog?.updatedAt?'Published '+shortDate(dash.catalog.updatedAt):dash?.catalog?.validity||'Open current price list'}
+          value={activeProductCount!==undefined?activeProductCount+' active products':(loading?'Checking products…':'Product data unavailable')}
+          sub={liveCatalog?.updatedAt?'Published '+shortDate(liveCatalog.updatedAt):liveCatalog?.validity||'Current product catalog'}
           accent="blue"
           href="/"
         />
@@ -161,10 +216,10 @@ export default function SystemDashboard(){
           label="Quotations"
           value={quotation
             ? ((quotation.counts?.Draft||0)+(quotation.counts?.Sent||0))+' need attention'
-            : (loading?'Loading…':'Sign in to view')}
+            : (loading?'Checking access…':'Locked')}
           sub={quotation
             ? (quotation.counts?.Draft||0)+' Draft · '+(quotation.counts?.Sent||0)+' Sent'
-            : 'Private sales data'}
+            : (loading?'Verifying session':'Sign in required')}
           accent="violet"
           href="/quotation"
         />
@@ -173,10 +228,10 @@ export default function SystemDashboard(){
           label="Finance"
           value={finance
             ? ((finance.counts?.Unpaid||0)+(finance.counts?.Partial||0))+' pending'
-            : (loading?'Loading…':'Sign in to view')}
+            : (loading?'Checking access…':'Locked')}
           sub={finance
             ? (finance.counts?.Unpaid||0)+' Unpaid · '+(finance.counts?.Partial||0)+' Partial'
-            : 'Private finance data'}
+            : (loading?'Verifying session':'Sign in required')}
           accent="green"
           href="/finance"
         />
@@ -225,7 +280,7 @@ export default function SystemDashboard(){
       <section className="module-section">
         <div className="panel-heading">
           <div><span>WORKSPACE</span><h2>Business modules</h2></div>
-          <p>Each card shows useful module context instead of repeating navigation.</p>
+          <p>Live status and key metrics across your core operations.</p>
         </div>
 
         <div className="module-grid">
@@ -234,15 +289,18 @@ export default function SystemDashboard(){
               <div><MiniIcon type="price"/><span>Price List</span></div>
               <a href="/">Open <Arrow/></a>
             </div>
-            <h3>{dash?.catalog?.title||'CTE Price List'}</h3>
-            <p>{dash?.catalog?.validity||'Current published price list'}</p>
+            <h3>{liveCatalog?.title||'CTE Price List'}</h3>
+            <p>{liveCatalog?.validity||'Current published price list'}</p>
             <div className="catalog-meta">
               <div><span>Rate</span><b>{rate?('1 CNY = '+Number(rate).toLocaleString('en-US')+' MMK'):'—'}</b></div>
-              <div><span>Last published</span><b>{dash?.catalog?.updatedAt?shortDate(dash.catalog.updatedAt):'Not recorded yet'}</b></div>
-              <div><span>Products</span><b>{dash?.catalog?.activeProductCount??'—'}</b></div>
+              <div><span>Last published</span><b>{liveCatalog?.updatedAt?shortDate(liveCatalog.updatedAt):'Not recorded yet'}</b></div>
+              <div><span>Products</span><b>{activeProductCount??'—'}</b></div>
             </div>
             <div className="featured-products">
-              {(dash?.catalog?.featured||[]).map(x=><div key={x.id}><span>{x.name}</span><b>{x.retail!==''?money(x.retail,'RMB'):'—'}</b></div>)}
+              {(catalog
+                ? (catalog.sections||[]).flatMap(s=>(s.rows||[]).filter(r=>r.visible!==false)).slice(0,3).map(r=>({id:r.id,name:r.spec,retail:r.retail}))
+                : (dash?.catalog?.featured||[])
+              ).map(x=><div key={x.id}><span>{x.name}</span><b>{x.retail!==''?money(x.retail,'RMB'):'—'}</b></div>)}
             </div>
           </article>
 
