@@ -60,6 +60,17 @@ export default function Finance(){
 
   useEffect(()=>{load()},[]);
 
+  useEffect(()=>{
+    if(logged!==true||!catalog||typeof window==='undefined')return;
+    const params=new URLSearchParams(window.location.search);
+    if(params.get('new')!=='true')return;
+    const n=emptyInvoice();
+    n.exchangeRate=String(catalog.rate||'');
+    setInv(n);
+    setMsg('New invoice ready.');
+    window.history.replaceState({},'',window.location.pathname);
+  },[logged,catalog]);
+
   async function login(e){
     e.preventDefault();
     const r=await fetch('/api/finance/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:user,password:pass})});
