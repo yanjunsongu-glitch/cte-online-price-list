@@ -39,19 +39,22 @@ function MiniIcon({type}){
   return <svg {...common}><path d="M4 7 12 3l8 4v10l-8 4-8-4V7Z"/><path d="m4 7 8 4 8-4M12 11v10"/></svg>;
 }
 
-function StatusCard({icon,label,value,sub,accent='neutral',href}){
+function StatusCard({icon,label,value,sub,href,attention=false,locked=false}){
   const inner=<>
-    <div className={'status-icon accent-'+accent}><MiniIcon type={icon}/></div>
-    <div className="status-copy">
+    <div className="status-card-top">
       <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{sub}</small>
+      <div className="status-card-tools">
+        <MiniIcon type={icon}/>
+        {href&&<Arrow/>}
+      </div>
     </div>
-    {href&&<div className="status-arrow"><Arrow/></div>}
+    <div className="status-card-value">{value}</div>
+    <div className="status-card-sub">{sub}</div>
   </>;
+  const cls='today-card'+(attention?' has-attention':'')+(locked?' is-locked':'');
   return href
-    ? <a className="today-card" href={href}>{inner}</a>
-    : <div className="today-card">{inner}</div>;
+    ? <a className={cls} href={href}>{inner}</a>
+    : <div className={cls}>{inner}</div>;
 }
 
 export default function SystemDashboard(){
@@ -184,14 +187,21 @@ export default function SystemDashboard(){
 
     <div className="ops-main">
       <section className="ops-welcome">
-        <div>
-          <span>{todayLabel()}</span>
+        <div className="welcome-copy">
+          <div className="welcome-meta">
+            <span>{todayLabel()}</span>
+            <i>·</i>
+            <span className="workspace-inline"><b/>Workspace online</span>
+          </div>
           <h1>{role==='Guest'?'CTE Online System':'Welcome back, '+username}</h1>
-          <p>{role==='Guest'
-            ? 'Open a module below. Sign in inside Quotations or Finance to see private business summaries here.'
-            : 'Here’s what needs attention today.'}</p>
+          {role==='Guest'&&<p>Sign in to Quotations or Finance to see private business summaries.</p>}
         </div>
-        <div className="workspace-state"><i/>Workspace online</div>
+
+        <div className="welcome-actions">
+          <a className="welcome-primary" href="/quotation?new=true"><span>＋</span> New Quotation</a>
+          <a href="/finance?new=true"><span>＋</span> Create Invoice</a>
+          <a href="/?share=true"><span>↗</span> Share Price List</a>
+        </div>
       </section>
 
       <section className="today-grid">
@@ -200,7 +210,6 @@ export default function SystemDashboard(){
           label="CNY → MMK"
           value={rate?('1 CNY = '+Number(rate).toLocaleString('en-US')+' MMK'):(loading?'Checking rate…':'Rate unavailable')}
           sub={rate?'Current price-list baseline':'Open Price List to configure rate'}
-          accent="purple"
           href="/"
         />
         <StatusCard
@@ -208,7 +217,6 @@ export default function SystemDashboard(){
           label="Price List"
           value={activeProductCount!==undefined?activeProductCount+' active products':(loading?'Checking products…':'Product data unavailable')}
           sub={liveCatalog?.updatedAt?'Published '+shortDate(liveCatalog.updatedAt):liveCatalog?.validity||'Current product catalog'}
-          accent="blue"
           href="/"
         />
         <StatusCard
@@ -220,7 +228,8 @@ export default function SystemDashboard(){
           sub={quotation
             ? (quotation.counts?.Draft||0)+' Draft · '+(quotation.counts?.Sent||0)+' Sent'
             : (loading?'Verifying session':'Sign in required')}
-          accent="violet"
+          attention={Boolean(quotation&&((quotation.counts?.Draft||0)+(quotation.counts?.Sent||0)>0))}
+          locked={!quotation&&!loading}
           href="/quotation"
         />
         <StatusCard
@@ -232,22 +241,10 @@ export default function SystemDashboard(){
           sub={finance
             ? (finance.counts?.Unpaid||0)+' Unpaid · '+(finance.counts?.Partial||0)+' Partial'
             : (loading?'Verifying session':'Sign in required')}
-          accent="green"
+          attention={Boolean(finance&&((finance.counts?.Unpaid||0)+(finance.counts?.Partial||0)>0))}
+          locked={!finance&&!loading}
           href="/finance"
         />
-      </section>
-
-      <section className="quick-panel">
-        <div className="panel-heading">
-          <div><span>QUICK ACTIONS</span><h2>Start working</h2></div>
-          <p>High-frequency tasks, one click away.</p>
-        </div>
-        <div className="quick-buttons">
-          <a className="quick-primary" href="/quotation?new=true"><span>＋</span> New Quotation</a>
-          <a href="/finance?new=true"><span>＋</span> Create Invoice</a>
-          <a href="/?share=true"><span>↗</span> Share Price List</a>
-          <a className="quick-muted" href="/warehouse"><span>□</span> Check Stock <small>Preview</small></a>
-        </div>
       </section>
 
       <section className="attention-panel">
