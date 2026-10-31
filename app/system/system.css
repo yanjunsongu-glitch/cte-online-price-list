@@ -65,3 +65,68 @@ a{color:inherit}
   .today-grid{grid-template-columns:1fr}.today-card{min-height:90px}.quick-buttons{grid-template-columns:1fr 1fr}.quick-buttons a{font-size:8px}
   .panel-heading{align-items:flex-start;flex-direction:column;gap:3px}.attention-panel{padding:12px}.attention-row{grid-template-columns:auto 1fr auto}.attention-status,.attention-row>b{grid-column:2}.attention-row>svg{grid-column:3;grid-row:1/3}.module-card{min-height:240px}.catalog-meta{grid-template-columns:1fr}.ops-footer{width:calc(100% - 22px);grid-template-columns:1fr 1fr}.ops-footer>span{display:none}
 }
+
+
+/* Account access menu */
+.account-menu-wrap{position:relative}
+.account-chip{
+  display:flex;align-items:center;gap:8px;
+  padding:0;border:0;background:transparent;cursor:pointer;
+  font:inherit;text-align:left
+}
+.account-chip.is-open .account-chevron{transform:rotate(180deg)}
+.account-chevron{color:#8f949e;font-size:11px;transition:.18s ease}
+.account-menu{
+  position:absolute;right:0;top:calc(100% + 10px);z-index:80;
+  width:280px;padding:10px;
+  border:1px solid #e3e5ea;border-radius:16px;
+  background:rgba(255,255,255,.97);backdrop-filter:blur(16px);
+  box-shadow:0 18px 45px rgba(29,34,48,.14)
+}
+.account-menu-head{
+  display:flex;align-items:center;gap:10px;
+  padding:7px 8px 11px;border-bottom:1px solid #f0f1f3
+}
+.account-menu-avatar{
+  width:38px;height:38px;display:grid;place-items:center;
+  border-radius:12px;background:#17191f;color:#fff;
+  font-size:11px;font-weight:900
+}
+.account-menu-head>div:last-child{display:grid;gap:2px}
+.account-menu-head strong{font-size:10px}
+.account-menu-head span{color:#8f949e;font-size:7px}
+.account-menu-section{display:grid;padding:10px 0 5px}
+.account-menu-section>span{
+  padding:0 8px 5px;color:#a0a4ad;
+  font-size:6.5px;font-weight:900;letter-spacing:1px
+}
+.account-menu-section a{
+  display:grid;gap:2px;padding:9px 8px;border-radius:10px;
+  text-decoration:none;transition:.16s ease
+}
+.account-menu-section a:hover{background:#f6f7f9}
+.account-menu-section b{font-size:9px;color:#3e434d}
+.account-menu-section small{font-size:7px;color:#969aa4}
+.account-menu-admin{
+  margin-top:4px;padding-top:8px;border-top:1px solid #f0f1f3
+}
+.account-menu-admin a{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:10px;padding:8px;border-radius:10px;text-decoration:none;
+  color:#858a94;transition:.16s ease
+}
+.account-menu-admin a:hover{background:#f6f7f9;color:#4b505a}
+.account-menu-admin span{font-size:8px;font-weight:800}
+.account-menu-admin small{font-size:6.5px;color:#a1a5ae}
+
+/* Locked KPI state */
+.today-card .status-copy strong{min-height:16px}
+.today-card .status-copy small{min-height:11px}
+
+@media(max-width:640px){
+  .account-menu{
+    position:fixed;left:11px;right:11px;top:74px;width:auto;
+    border-radius:15px
+  }
+  .account-chevron{display:none}
+}
