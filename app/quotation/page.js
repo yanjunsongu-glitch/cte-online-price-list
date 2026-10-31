@@ -66,6 +66,18 @@ export default function Quotation(){
   }
   useEffect(()=>{load()},[]);
 
+  useEffect(()=>{
+    if(logged!==true||!catalog||typeof window==='undefined')return;
+    const params=new URLSearchParams(window.location.search);
+    if(params.get('new')!=='true')return;
+    const n=emptyQuotation();
+    n.exchangeRate=String(catalog.rate||'');
+    setQ(n);
+    setTab('edit');
+    setMsg('New quotation ready.');
+    window.history.replaceState({},'',window.location.pathname);
+  },[logged,catalog]);
+
   async function login(e){
     e.preventDefault();
     const r=await fetch('/api/quotation/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:user,password:pass})});
