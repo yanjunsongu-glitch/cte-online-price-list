@@ -157,7 +157,7 @@ export default function Finance(){
   </main>;
 
   return <main className="finance-shell">
-    <header className="finance-top no-print">
+    <header className="finance-top no-print"><a className="module-system-link" href="/system">← CTE Online System</a>
       <div><span className="finance-eyebrow">CTE FINANCE</span><h1>Invoice System</h1><p>Create, save and print customer invoices.</p></div>
       <div className="finance-top-actions">
         <button className="finance-secondary" onClick={newInvoice}>New Invoice</button>
