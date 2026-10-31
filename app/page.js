@@ -456,7 +456,7 @@ export default function Home(){
     </div>
   }
 
-  if(!data) return <main className="shell"><div className="loading">Loading CTE price list…</div></main>;
+  if(!data) return <main className="shell"><a className="system-back-link no-print" href="/system">← CTE Online System</a><div className="loading">Loading CTE price list…</div></main>;
 
   const logoSrc=(data.company?.logo && data.company.logo!=='/logo.jpg')?data.company.logo:CTE_LOGO;
   const item=viewer?.items?.[slide];
