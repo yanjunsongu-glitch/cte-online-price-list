@@ -319,13 +319,14 @@ export default function Quotation(){
             </div>
 
             <table className="qt-table">
-              <thead><tr><th>No</th><th>Description</th><th>Brand</th><th>Unit</th><th>Qty</th><th>Unit Price<br/>({q.currency})</th><th>Total Price<br/>({q.currency})</th></tr></thead>
+              <thead><tr><th>No</th><th>Description</th><th>Brand</th><th>Unit</th><th>Qty</th><th>Unit Price<br/>({q.currency})</th><th>Total Price<br/>({q.currency})</th><th>Remark</th></tr></thead>
               <tbody>
                 {calc.rows.map((it,i)=><tr key={it.id}>
                   <td>{i+1}</td><td>{it.description}</td><td>{it.brand}</td><td>{it.unit}</td><td>{it.qty}</td>
                   <td className="num">{fmt(it.unitPrice)}</td><td className="num">{fmt(it.total)}</td>
+                  <td className="qt-item-remark">{it.remark||''}</td>
                 </tr>)}
-                <tr className="qt-subtotal"><td></td><td colSpan="5">Sub Total ( {q.currency} )</td><td className="num">{fmt(calc.subtotal)}</td></tr>
+                <tr className="qt-subtotal"><td></td><td colSpan="5">Sub Total ( {q.currency} )</td><td className="num">{fmt(calc.subtotal)}</td><td></td></tr>
               </tbody>
             </table>
 
