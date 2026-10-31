@@ -65,8 +65,8 @@ export default function SystemDashboard(){
     <section className="os-hero">
       <div className="hero-copy">
         <div className="hero-pill"><span>NEW</span> CTE Online System</div>
-        <h1>Everything your team needs,<br/><em>in one place.</em></h1>
-        <p>Move from price → quotation → finance → warehouse without jumping between files and chats.</p>
+        <h1>Work moves faster<br/><em>when everything connects.</em></h1>
+        <p>One clean CTE workspace for pricing, quotations, finance and warehouse operations.</p>
 
         <div className="hero-buttons">
           <a className="hero-go" href="/">Open workspace <Arrow/></a>
@@ -74,18 +74,29 @@ export default function SystemDashboard(){
         </div>
       </div>
 
-      <div className="hero-orbit-card">
-        <div className="orbit-glow"/>
-        <div className="orbit-ring ring-one"/>
-        <div className="orbit-ring ring-two"/>
-        <div className="orbit-center">
-          <div className="orbit-logo">CTE</div>
-          <span>ONLINE</span>
+      <div className="hero-preview-stage">
+        <div className="preview-browser browser-back">
+          <div className="browser-bar"><i/><i/><i/><span>cte / quotation</span></div>
+          <div className="browser-body quote-mock">
+            <div className="mock-title"><span>Quotation</span><b>Draft</b></div>
+            <div className="mock-line wide"/><div className="mock-line"/><div className="mock-line short"/>
+            <div className="mock-table"><span/><span/><span/><span/></div>
+          </div>
         </div>
-        <div className="float-chip chip-a"><i/> Price List</div>
-        <div className="float-chip chip-b"><i/> Quotation</div>
-        <div className="float-chip chip-c"><i/> Finance</div>
-        <div className="float-chip chip-d"><i/> Warehouse</div>
+
+        <div className="preview-browser browser-front">
+          <div className="browser-bar"><i/><i/><i/><span>cte / price-list</span></div>
+          <div className="browser-body">
+            <div className="mock-kicker">PRICE LIST</div>
+            <div className="mock-heading">CTE Myanmar</div>
+            <div className="mock-product"><b>LFP16076</b><span>21,099</span></div>
+            <div className="mock-product"><b>CIS240KWH</b><span>288,000</span></div>
+            <div className="mock-product"><b>CIS261KWH</b><span>299,000</span></div>
+          </div>
+        </div>
+
+        <div className="preview-float float-finance"><span>Finance</span><b>Invoice ready</b></div>
+        <div className="preview-float float-stock"><span>Warehouse</span><b>Stock synced</b></div>
       </div>
     </section>
 
