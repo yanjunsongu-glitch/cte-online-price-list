@@ -167,7 +167,7 @@ export default function Admin(){
     setMsg(r.ok?'Published successfully.':'Save failed');
   }
 
-  if(!d)return <main className="admin-shell"><div className="login-card"><h1>CTE Price List Admin</h1><form onSubmit={login}><input value={u} onChange={e=>setU(e.target.value)} placeholder="Username"/><input type="password" value={p} onChange={e=>setP(e.target.value)} placeholder="Password"/><button>Login</button></form><p>{msg||'Authorized staff only.'}</p><a href="/">Customer View</a></div></main>;
+  if(!d)return <main className="admin-shell"><a className="system-back-link" href="/system">← CTE Online System</a><div className="login-card"><h1>CTE Price List Admin</h1><form onSubmit={login}><input value={u} onChange={e=>setU(e.target.value)} placeholder="Username"/><input type="password" value={p} onChange={e=>setP(e.target.value)} placeholder="Password"/><button>Login</button></form><p>{msg||'Authorized staff only.'}</p><a href="/">Customer View</a></div></main>;
 
   return <main className="admin-shell">
     <div className="admin-top">
