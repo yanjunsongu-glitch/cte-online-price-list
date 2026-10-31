@@ -74,3 +74,39 @@
   .qt-company-logo-cover{width:108px!important;height:108px!important;margin-bottom:24px!important}
   .qt-company-logo-side{width:84px!important;height:84px!important}
 }
+
+/* Per-product remark column */
+.qt-table th:nth-child(1){width:5%}
+.qt-table th:nth-child(2){width:24%}
+.qt-table th:nth-child(3){width:10%}
+.qt-table th:nth-child(4){width:7%}
+.qt-table th:nth-child(5){width:7%}
+.qt-table th:nth-child(6){width:13%}
+.qt-table th:nth-child(7){width:14%}
+.qt-table th:nth-child(8){width:20%}
+
+.qt-item-remark{
+  min-width:105px;
+  max-width:180px;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  line-height:1.35;
+  font-family:Inter,"Segoe UI",Arial,sans-serif;
+  font-size:10px;
+  color:#4a5562;
+  text-align:left;
+}
+
+@media print{
+  .qt-item-remark{
+    min-width:0!important;
+    max-width:none!important;
+    font-size:7.5pt!important;
+    line-height:1.3!important;
+  }
+  .qt-table th:nth-child(2){width:23%!important}
+  .qt-table th:nth-child(6){width:12%!important}
+  .qt-table th:nth-child(7){width:14%!important}
+  .qt-table th:nth-child(8){width:21%!important}
+}
