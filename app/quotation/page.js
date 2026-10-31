@@ -175,7 +175,7 @@ export default function Quotation(){
   </main>;
 
   return <main className="quotation-shell">
-    <header className="quotation-top no-print">
+    <header className="quotation-top no-print"><a className="module-system-link" href="/system">← CTE Online System</a>
       <div>
         <span>CTE SALES</span>
         <h1>Quotation System</h1>
