@@ -3377,3 +3377,40 @@ footer{
     margin-right:0;
   }
 }
+
+
+/* CTE Online System navigation */
+.system-back-link{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin:10px 14px 0;
+  padding:7px 10px;
+  border:1px solid #cbd9e5;
+  border-radius:9px;
+  background:#fff;
+  color:#0b5ba7;
+  text-decoration:none;
+  font-size:10px;
+  font-weight:900;
+}
+.module-system-link{
+  display:inline-flex;
+  align-items:center;
+  min-height:34px;
+  padding:0 10px;
+  border:1px solid #cbd8e4;
+  border-radius:9px;
+  background:#f7fbff;
+  color:#0b5ba7;
+  text-decoration:none;
+  font-size:10px;
+  font-weight:900;
+  white-space:nowrap;
+}
+@media(max-width:760px){
+  .module-system-link{
+    width:100%;
+    justify-content:center;
+  }
+}
