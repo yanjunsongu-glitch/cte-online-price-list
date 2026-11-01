@@ -76,6 +76,7 @@ export async function GET(req){
       quotation:quotationAllowed,
       finance:financeAllowed,
       warehouse:warehouseAllowed,
+      activity:hasPermission(session,'activity.view'),
       priceShare:hasPermission(session,'price.share')
     },
     catalog:{
