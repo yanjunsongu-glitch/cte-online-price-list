@@ -1,0 +1,1 @@
+export const metadata={title:'Warehouse — CTE'};export default function Layout({children}){return children}
