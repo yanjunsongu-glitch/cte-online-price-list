@@ -29,8 +29,6 @@ function fmt(v){
 
 export default function Finance(){
   const [logged,setLogged]=useState(null);
-  const [user,setUser]=useState('');
-  const [pass,setPass]=useState('');
   const [catalog,setCatalog]=useState(null);
   const [history,setHistory]=useState([]);
   const [inv,setInv]=useState(emptyInvoice());
@@ -45,7 +43,7 @@ export default function Finance(){
       fetch('/api/finance/invoices',{cache:'no-store'}),
       fetch('/api/catalog',{cache:'no-store'})
     ]);
-    if(a.status===401){setLogged(false);return}
+    if(a.status===401){window.location.replace('/login?next=/finance');return}
     if(a.ok){
       const j=await a.json();
       setHistory(j.items||[]);
@@ -71,18 +69,9 @@ export default function Finance(){
     window.history.replaceState({},'',window.location.pathname);
   },[logged,catalog]);
 
-  async function login(e){
-    e.preventDefault();
-    const r=await fetch('/api/finance/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:user,password:pass})});
-    if(!r.ok){setMsg('Login failed');return}
-    setPass('');
-    setMsg('');
-    await load();
-  }
-
   async function logout(){
-    await fetch('/api/finance/logout',{method:'POST'});
-    setLogged(false);setHistory([]);setInv(emptyInvoice());
+    await fetch('/api/system/logout',{method:'POST'});
+    window.location.replace('/login');
   }
 
   function patch(k,v){setInv(x=>({...x,[k]:v}))}
@@ -154,18 +143,6 @@ export default function Finance(){
   }
 
   if(logged===null)return <main className="finance-shell"><div className="finance-loading">Loading Finance…</div></main>;
-  if(logged===false)return <main className="finance-login-page">
-    <form className="finance-login-card" onSubmit={login}>
-      <img className="finance-login-logo" src="/icon.svg" alt="CTE"/>
-      <h1>CTE Finance</h1>
-      <p>Invoice System · Authorized staff only</p>
-      <label>Username<input value={user} onChange={e=>setUser(e.target.value)} autoComplete="username"/></label>
-      <label>Password<input type="password" value={pass} onChange={e=>setPass(e.target.value)} autoComplete="current-password"/></label>
-      <button>Login</button>
-      <span className="finance-login-msg">{msg}</span>
-      <a href="/">Back to Price List</a>
-    </form>
-  </main>;
 
   return <main className="finance-shell">
     <header className="finance-top no-print"><a className="module-system-link" href="/system">← CTE Online System</a>
