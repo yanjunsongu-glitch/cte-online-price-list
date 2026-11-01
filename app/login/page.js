@@ -10,7 +10,7 @@ export default function Login(){
 
   useEffect(()=>{
     fetch('/api/system/me',{cache:'no-store'}).then(r=>{
-      if(r.ok)window.location.replace('/system');
+      if(r.ok){const next=new URLSearchParams(window.location.search).get('next');window.location.replace(next&&next.startsWith('/')?next:'/system');}
     }).catch(()=>{});
   },[]);
 
@@ -24,7 +24,7 @@ export default function Login(){
       });
       const j=await r.json().catch(()=>({}));
       if(!r.ok){setMsg(j.error||'Login failed.');return}
-      window.location.replace('/system');
+      const next=new URLSearchParams(window.location.search).get('next');window.location.replace(next&&next.startsWith('/')?next:'/system');
     }finally{setBusy(false)}
   }
 
