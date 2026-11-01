@@ -3418,3 +3418,8 @@ footer{
 /* Unified transparent CTE brand assets */
 .finance-login-logo{display:block!important;width:76px!important;height:76px!important;object-fit:contain!important;margin:0 auto 10px!important;background:transparent!important;border-radius:0!important;color:transparent!important}
 .invoice-logo{display:block!important;width:76px!important;height:76px!important;object-fit:contain!important;background:transparent!important;border-radius:0!important;color:transparent!important}
+
+.admin-brand-logo{display:block;width:54px;height:54px;object-fit:contain;background:transparent}
+.login-card .admin-brand-logo{margin:0 auto 10px}
+.admin-title-brand{display:flex;align-items:center;gap:12px}
+.admin-title-brand>div{display:grid;gap:1px}
