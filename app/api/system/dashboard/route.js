@@ -71,7 +71,7 @@ export async function GET(req){
     try{financeSummary=summarizeInvoices(await listInvoices(100))}catch{}
   }
 
-  const activeRows=(catalog.sections||[]).flatMap(s=>(s.rows||[]).filter(r=>r.visible!==false));
+  const activeRows=(catalog.sections||[]).flatMap(s=>(s.rows||[]).filter(r=>r.visible!==false&&r.archived!==true));
   const featured=activeRows.slice(0,3).map(r=>({
     id:r.id,name:r.spec,retail:r.retail??'',installer:r.installer??'',wholesale:r.wholesale??''
   }));
