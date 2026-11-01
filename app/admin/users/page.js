@@ -63,7 +63,7 @@ export default function Users(){
   if(loading)return <main className="users-page"><div className="users-loading">Loading accounts…</div></main>;
   return <main className="users-page">
     <header className="users-top">
-      <a href="/system" className="users-brand"><span>CTE</span><div><b>CTE Online</b><small>User Management</small></div></a>
+      <a href="/system" className="users-brand"><img src="/icon.svg" alt="CTE"/><div><b>CTE Online</b><small>User Management</small></div></a>
       <div className="users-account"><span>{me?.fullName||me?.username}</span><b>{roleLabel(me?.role)}</b><button onClick={logout}>Sign out</button></div>
     </header>
 
