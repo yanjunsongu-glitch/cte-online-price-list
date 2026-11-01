@@ -8,53 +8,43 @@ function money(v,currency='RMB'){
   const label=currency==='MMK'?'MMK':currency==='CNY'?'CNY':'RMB';
   return n.toLocaleString('en-US',{maximumFractionDigits:2})+' '+label;
 }
-
 function shortDate(v){
   if(!v)return 'Not published yet';
-  try{
-    return new Intl.DateTimeFormat('en-GB',{
-      month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'
-    }).format(new Date(v));
-  }catch{return '—'}
+  try{return new Intl.DateTimeFormat('en-GB',{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(v))}
+  catch{return '—'}
 }
-
 function todayLabel(){
-  try{
-    return new Intl.DateTimeFormat('en-GB',{
-      weekday:'long',day:'2-digit',month:'long',year:'numeric'
-    }).format(new Date());
-  }catch{return ''}
+  try{return new Intl.DateTimeFormat('en-GB',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}).format(new Date())}
+  catch{return ''}
 }
-
-function Arrow(){
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>;
+function Icon({type}){
+  const p={viewBox:'0 0 24 24','aria-hidden':'true'};
+  if(type==='home')return <svg {...p}><path d="m4 10 8-6 8 6v9H5v-9"/><path d="M9 19v-6h6v6"/></svg>;
+  if(type==='price')return <svg {...p}><path d="M4 4h8l8 8-8 8-8-8V4Z"/><circle cx="8.2" cy="8.2" r="1.2"/></svg>;
+  if(type==='quote')return <svg {...p}><path d="M6 3h8l4 4v14H6V3Z"/><path d="M14 3v5h5M9 12h6M9 16h5"/></svg>;
+  if(type==='finance')return <svg {...p}><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v5c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 11v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5"/></svg>;
+  if(type==='warehouse')return <svg {...p}><path d="m4 7 8-4 8 4v10l-8 4-8-4V7Z"/><path d="m4 7 8 4 8-4M12 11v10"/></svg>;
+  if(type==='staff')return <svg {...p}><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2"/><path d="M3 19c.6-3.2 2.7-5 6-5s5.4 1.8 6 5M15 15c2.9 0 4.8 1.3 5.5 4"/></svg>;
+  if(type==='rate')return <svg {...p}><path d="M6 7h12M6 17h12M9 4 6 7l3 3M15 14l3 3-3 3"/></svg>;
+  if(type==='arrow')return <svg {...p}><path d="M7 17 17 7M9 7h8v8"/></svg>;
+  if(type==='plus')return <svg {...p}><path d="M12 5v14M5 12h14"/></svg>;
+  return <svg {...p}><circle cx="12" cy="12" r="9"/></svg>;
 }
-
-function MiniIcon({type}){
-  const common={viewBox:'0 0 24 24','aria-hidden':'true'};
-  if(type==='rate')return <svg {...common}><path d="M6 7h12M6 17h12M9 4 6 7l3 3M15 14l3 3-3 3"/></svg>;
-  if(type==='price')return <svg {...common}><path d="M4 4h7.8L20 12.2 12.2 20 4 11.8V4Z"/><circle cx="8" cy="8" r="1.4"/></svg>;
-  if(type==='quote')return <svg {...common}><path d="M6 3h8l4 4v14H6V3Z"/><path d="M14 3v5h5M9 12h6M9 16h5"/></svg>;
-  if(type==='finance')return <svg {...common}><path d="M4 7h15v12H4V7Z"/><path d="M6 7V5h10M15 12h4v3h-4a1.5 1.5 0 0 1 0-3Z"/></svg>;
-  return <svg {...common}><path d="M4 7 12 3l8 4v10l-8 4-8-4V7Z"/><path d="m4 7 8 4 8-4M12 11v10"/></svg>;
-}
-
-function StatusCard({icon,label,value,sub,href,attention=false,locked=false}){
-  const inner=<>
-    <div className="status-card-top">
-      <span>{label}</span>
-      <div className="status-card-tools">
-        <MiniIcon type={icon}/>
-        {href&&<Arrow/>}
-      </div>
-    </div>
-    <div className="status-card-value">{value}</div>
-    <div className="status-card-sub">{sub}</div>
+function Kpi({type,label,value,sub,tone='blue',href}){
+  const body=<>
+    <div className={'kpi-icon '+tone}><Icon type={type}/></div>
+    <div className="kpi-copy"><span>{label}</span><strong>{value}</strong><small>{sub}</small></div>
   </>;
-  const cls='today-card'+(attention?' has-attention':'')+(locked?' is-locked':'');
-  return href
-    ? <a className={cls} href={href}>{inner}</a>
-    : <div className={cls}>{inner}</div>;
+  return href?<a className="kpi-card" href={href}>{body}</a>:<div className="kpi-card">{body}</div>;
+}
+function ModuleCard({type,title,desc,href,tone='blue',locked=false,badge}){
+  return <a className={'module-tile '+tone+(locked?' locked':'')} href={href}>
+    <div className="module-icon"><Icon type={type}/></div>
+    <div className="module-tile-top">{badge&&<span>{badge}</span>}</div>
+    <h3>{title}</h3>
+    <p>{desc}</p>
+    <div className="module-open"><span>{locked?'Restricted':'Open module'}</span><Icon type="arrow"/></div>
+  </a>
 }
 
 export default function SystemDashboard(){
@@ -70,312 +60,164 @@ export default function SystemDashboard(){
       fetch('/api/catalog',{cache:'no-store'}).then(r=>r.ok?r.json():null)
     ]).then(results=>{
       if(!active)return;
-      const dashboard=results[0].status==='fulfilled'?results[0].value:null;
-      const liveCatalog=results[1].status==='fulfilled'?results[1].value:null;
-      setDash(dashboard);
-      setCatalog(liveCatalog);
+      setDash(results[0].status==='fulfilled'?results[0].value:null);
+      setCatalog(results[1].status==='fulfilled'?results[1].value:null);
       setLoading(false);
     });
-    return ()=>{active=false};
+    return()=>{active=false};
   },[]);
 
   useEffect(()=>{
     if(!accountOpen)return;
-    const onKey=e=>{if(e.key==='Escape')setAccountOpen(false)};
-    const onClick=e=>{
-      if(!e.target.closest('.account-menu-wrap'))setAccountOpen(false);
-    };
-    window.addEventListener('keydown',onKey);
-    window.addEventListener('pointerdown',onClick);
-    return ()=>{
-      window.removeEventListener('keydown',onKey);
-      window.removeEventListener('pointerdown',onClick);
-    };
+    const close=e=>{if(e.key==='Escape'||(e.type==='pointerdown'&&!e.target.closest('.account-wrap')))setAccountOpen(false)};
+    window.addEventListener('keydown',close);window.addEventListener('pointerdown',close);
+    return()=>{window.removeEventListener('keydown',close);window.removeEventListener('pointerdown',close)};
   },[accountOpen]);
 
   const role=dash?.role||'Guest';
   const username=dash?.username||'Team Member';
+  const displayName=dash?.fullName||username;
   const liveCatalog=catalog||dash?.catalog||null;
   const rate=liveCatalog?.rate;
   const activeProductCount=catalog
-    ? (catalog.sections||[]).reduce((sum,s)=>sum+(s.rows||[]).filter(r=>r.visible!==false).length,0)
-    : dash?.catalog?.activeProductCount;
+    ?(catalog.sections||[]).reduce((sum,s)=>sum+(s.rows||[]).filter(r=>r.visible!==false&&r.archived!==true).length,0)
+    :dash?.catalog?.activeProductCount;
   const quotation=dash?.quotations;
   const finance=dash?.finance;
-  const displayName=dash?.fullName||username;
 
-  async function systemLogout(){
-    await fetch('/api/system/logout',{method:'POST'}).catch(()=>{});
-    window.location.replace('/login');
-  }
-
-  const needsAttention=useMemo(()=>{
+  const openWork=useMemo(()=>{
     const rows=[];
-    if(quotation?.recent){
-      for(const q of quotation.recent){
-        if(['Draft','Sent'].includes(q.status)){
-          rows.push({
-            kind:'Quotation',
-            title:q.customer||q.quotationNo,
-            ref:q.quotationNo,
-            status:q.status,
-            amount:money(q.subtotal,q.currency),
-            href:'/quotation'
-          });
-        }
-      }
+    for(const q of quotation?.recent||[]){
+      if(['Draft','Sent'].includes(q.status))rows.push({
+        type:'Quotation',title:q.customer||q.quotationNo,ref:q.quotationNo,status:q.status,
+        amount:money(q.subtotal,q.currency),href:'/quotation',icon:'quote'
+      });
     }
-    if(finance?.recent){
-      for(const inv of finance.recent){
-        if(inv.paymentStatus!=='Paid'){
-          rows.push({
-            kind:'Invoice',
-            title:inv.customer||inv.invoiceNo,
-            ref:inv.invoiceNo,
-            status:inv.paymentStatus,
-            amount:money(inv.grandTotal,inv.currency),
-            href:'/finance'
-          });
-        }
-      }
+    for(const inv of finance?.recent||[]){
+      if(inv.paymentStatus!=='Paid')rows.push({
+        type:'Invoice',title:inv.customer||inv.invoiceNo,ref:inv.invoiceNo,status:inv.paymentStatus,
+        amount:money(inv.grandTotal,inv.currency),href:'/finance',icon:'finance'
+      });
     }
     return rows.slice(0,5);
   },[quotation,finance]);
 
-  return <main className="ops-page">
-    <header className="ops-header">
-      <a className="ops-brand" href="/system">
-        <div className="ops-logo">CTE</div>
-        <div><strong>CTE Online</strong><span>Internal workspace</span></div>
+  async function logout(){
+    await fetch('/api/system/logout',{method:'POST'}).catch(()=>{});
+    window.location.replace('/login');
+  }
+
+  return <main className="dashbook">
+    <aside className="dash-sidebar">
+      <a className="dash-brand" href="/system">
+        <img src="/icon.svg" alt="CTE"/>
+        <div><strong>CTE</strong><span>Dashbook</span></div>
       </a>
 
-      <nav className="ops-nav">
-        <a className="active" href="/system">Dashboard</a>
-        <a href="/">Price List</a>
-        {dash?.permissions?.quotation&&<a href="/quotation">Quotations</a>}
-        {dash?.permissions?.finance&&<a href="/finance">Finance</a>}
-        {dash?.permissions?.warehouse&&<a href="/warehouse">Warehouse</a>}
+      <div className="side-label">CONTROL CENTER</div>
+      <nav className="side-nav">
+        <a className="active" href="/system"><Icon type="home"/><span>Dashbook</span></a>
+        <a href="/"><Icon type="price"/><span>Price List</span></a>
+        {dash?.permissions?.quotation&&<a href="/quotation"><Icon type="quote"/><span>Quotations</span></a>}
+        {dash?.permissions?.finance&&<a href="/finance"><Icon type="finance"/><span>Finance</span></a>}
+        {dash?.permissions?.warehouse&&<a href="/warehouse"><Icon type="warehouse"/><span>Warehouse</span></a>}
+        {dash?.permissions?.users&&<a href="/admin/users"><Icon type="staff"/><span>Staff Console</span></a>}
       </nav>
 
-      <div className="account-menu-wrap">
-        <button className={accountOpen?'account-chip is-open':'account-chip'} onClick={()=>setAccountOpen(x=>!x)} aria-expanded={accountOpen}>
-          <div className="account-avatar">{displayName==='Team Member'?'T':displayName.slice(0,1).toUpperCase()}</div>
-          <div><strong>{displayName}</strong><span>{role}</span></div>
-          <span className="account-chevron">⌄</span>
-        </button>
+      <div className="side-divider"/>
+      <div className="side-label">SYSTEM</div>
+      <nav className="side-nav side-secondary">
+        {dash?.permissions?.admin&&<a href="/admin"><Icon type="price"/><span>Price Admin</span></a>}
+        <a href="/login"><Icon type="staff"/><span>Account</span></a>
+      </nav>
 
-        {accountOpen&&<div className="account-menu">
-          <div className="account-menu-head">
-            <div className="account-menu-avatar">{displayName==='Team Member'?'T':displayName.slice(0,1).toUpperCase()}</div>
-            <div><strong>{displayName}</strong><span>{role==='Guest'?'Not signed in':role}</span></div>
-          </div>
+      <div className="side-ribbon" aria-hidden="true"/>
+      <div className="side-footer"><span>CTE Myanmar</span><small>Internal Operations</small></div>
+    </aside>
 
-          <div className="account-menu-section">
-            <span>WORKSPACE</span>
-            <a href="/"><b>Price List</b><small>Open current prices</small></a>
-            {dash?.permissions?.quotation&&<a href="/quotation"><b>Quotations</b><small>Open sales workspace</small></a>}
-            {dash?.permissions?.finance&&<a href="/finance"><b>Finance</b><small>Open finance workspace</small></a>}
-            {dash?.permissions?.warehouse&&<a href="/warehouse"><b>Warehouse</b><small>Open inventory workspace</small></a>}
-            {dash?.permissions?.users&&<a href="/admin/users"><b>Users & Access</b><small>Manage accounts and permissions</small></a>}
-          </div>
+    <section className="dash-content">
+      <header className="dash-topbar">
+        <div className="dash-search">
+          <span>⌕</span><input aria-label="Search" placeholder="Search in CTE Dashbook…" readOnly/>
+          <kbd>⌘ K</kbd>
+        </div>
 
-          <div className="account-menu-admin">
-            {role==='Guest'
-              ? <a href="/login"><span>Sign in</span><small>CTE Account</small></a>
-              : <>
-                  {dash?.permissions?.admin&&<a href="/admin"><span>Price List Admin</span><small>Manage catalog</small></a>}
-                  <button type="button" onClick={systemLogout}><span>Sign out</span><small>{role}</small></button>
-                </>}
+        <div className="account-wrap">
+          <button className="top-account" onClick={()=>setAccountOpen(v=>!v)}>
+            <div className="top-avatar">{displayName.slice(0,1).toUpperCase()}</div>
+            <div><strong>{displayName}</strong><span>{role}</span></div>
+            <b>⌄</b>
+          </button>
+          {accountOpen&&<div className="account-popover">
+            <div className="account-pop-head"><strong>{displayName}</strong><span>{role==='Guest'?'Not signed in':role}</span></div>
+            <a href="/system">Dashbook</a>
+            <a href="/">Price List</a>
+            {dash?.permissions?.users&&<a href="/admin/users">Users & Access</a>}
+            {dash?.permissions?.admin&&<a href="/admin">Price List Admin</a>}
+            {role==='Guest'?<a className="account-primary" href="/login">Sign in</a>:<button onClick={logout}>Sign out</button>}
+          </div>}
+        </div>
+      </header>
+
+      <div className="dash-scroll">
+        <section className="hero">
+          <div className="hero-ribbon ribbon-red"/>
+          <div className="hero-ribbon ribbon-yellow"/>
+          <div className="hero-copy">
+            <span className="hero-eyebrow">CTE INTERNAL OPERATIONS</span>
+            <h1>{role==='Guest'?'Welcome to CTE Dashbook':'Welcome back, '+displayName}</h1>
+            <p>Your integrated workspace for pricing, quotations, finance, warehouse, and people operations.</p>
+            <div className="hero-meta"><span>{todayLabel()}</span><i/> <span className="online"><b/>Workspace online</span></div>
           </div>
-        </div>}
+          <img className="hero-mark" src="/icon.svg" alt=""/>
+        </section>
+
+        <section className="kpi-grid">
+          <Kpi type="rate" label="CNY → MMK" value={rate?('1 : '+Number(rate).toLocaleString('en-US')):(loading?'Checking…':'—')} sub={rate?'Current baseline rate':'Rate unavailable'} tone="blue" href="/"/>
+          <Kpi type="price" label="Active Price Items" value={activeProductCount!==undefined?activeProductCount:(loading?'…':'—')} sub={liveCatalog?.updatedAt?'Published '+shortDate(liveCatalog.updatedAt):'Current catalog'} tone="yellow" href="/"/>
+          <Kpi type="quote" label="Open Quotations" value={quotation?((quotation.counts?.Draft||0)+(quotation.counts?.Sent||0)):(loading?'…':'Locked')} sub={quotation?((quotation.counts?.Draft||0)+' Draft · '+(quotation.counts?.Sent||0)+' Sent'):'Sign in required'} tone="red" href="/quotation"/>
+          <Kpi type="finance" label="Finance Pending" value={finance?((finance.counts?.Unpaid||0)+(finance.counts?.Partial||0)):(loading?'…':'Locked')} sub={finance?((finance.counts?.Unpaid||0)+' Unpaid · '+(finance.counts?.Partial||0)+' Partial'):'Sign in required'} tone="blue" href="/finance"/>
+        </section>
+
+        <section className="dash-section">
+          <div className="section-heading"><div><span>WORKSPACE</span><h2>Modules</h2></div><p>Core operations, all in one place.</p></div>
+          <div className="modules-layout">
+            <div className="module-grid">
+              <ModuleCard type="price" title="Price List" desc="Manage product pricing, customer pricing, validity, and sharing." href="/" tone="primary"/>
+              <ModuleCard type="quote" title="Quotations" desc="Create, manage, and track customer quotations." href="/quotation" tone="red" locked={!dash?.permissions?.quotation}/>
+              <ModuleCard type="finance" title="Finance" desc="Monitor invoices, payment status, and outstanding records." href="/finance" tone="yellow" locked={!dash?.permissions?.finance}/>
+              <ModuleCard type="warehouse" title="Warehouse" desc="Track inventory, stock movement, reservations, and delivery." href="/warehouse" tone="blue" badge="In development"/>
+              {dash?.permissions?.users&&<ModuleCard type="staff" title="Staff Console" desc="Manage staff information, access, and internal permissions." href="/admin/users" tone="purple"/>}
+            </div>
+
+            <aside className="quick-panel">
+              <div className="quick-head"><div><span>⚡</span><h3>Quick Actions</h3></div><small>Common tasks, one click away.</small></div>
+              <div className="quick-list">
+                {dash?.permissions?.quotation&&<a href="/quotation?new=true"><Icon type="quote"/><span>New Quotation</span><b>›</b></a>}
+                {dash?.permissions?.admin&&<a href="/admin"><Icon type="price"/><span>Update Price List</span><b>›</b></a>}
+                {dash?.permissions?.priceShare&&<a href="/?share=true"><Icon type="price"/><span>Share Price List</span><b>›</b></a>}
+                {dash?.permissions?.finance&&<a href="/finance?new=true"><Icon type="finance"/><span>Create Invoice</span><b>›</b></a>}
+                {dash?.permissions?.users&&<a href="/admin/users"><Icon type="staff"/><span>Manage Staff Access</span><b>›</b></a>}
+                {role==='Guest'&&<a href="/login"><Icon type="staff"/><span>Sign in to CTE Account</span><b>›</b></a>}
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section className="work-panel">
+          <div className="section-heading"><div><span>OPEN WORK</span><h2>Needs attention</h2></div><p>Draft quotations and outstanding invoices from live system data.</p></div>
+          {openWork.length?<div className="work-list">
+            {openWork.map((x,i)=><a href={x.href} key={x.type+x.ref+i}>
+              <div className={'work-icon '+(x.type==='Invoice'?'invoice':'quotation')}><Icon type={x.icon}/></div>
+              <div className="work-main"><strong>{x.title}</strong><span>{x.ref} · {x.type}</span></div>
+              <span className={'work-status '+String(x.status).toLowerCase()}>{x.status}</span>
+              <b>{x.amount}</b><em>›</em>
+            </a>)}
+          </div>:<div className="work-empty"><div>✓</div><strong>{role==='Guest'?'Private activity is locked':'Nothing urgent right now'}</strong><span>{role==='Guest'?'Sign in to load quotation and finance work.':'No Draft/Sent quotations or unpaid invoices are currently surfaced.'}</span></div>}
+        </section>
+
+        <footer className="dash-footer"><span>CTE Myanmar · Dashbook</span><small>{role}</small></footer>
       </div>
-    </header>
-
-    <div className="ops-main">
-      <section className="ops-welcome">
-        <div className="welcome-copy">
-          <div className="welcome-meta">
-            <span>{todayLabel()}</span>
-            <i>·</i>
-            <span className="workspace-inline"><b/>Workspace online</span>
-          </div>
-          <h1>{role==='Guest'?'CTE Online System':'Welcome back, '+displayName}</h1>
-          {role==='Guest'&&<p>Sign in to Quotations or Finance to see private business summaries.</p>}
-        </div>
-
-        <div className="welcome-actions">
-          {dash?.permissions?.quotation&&<a className="welcome-primary" href="/quotation?new=true"><span>＋</span> New Quotation</a>}
-          {dash?.permissions?.finance&&<a href="/finance?new=true"><span>＋</span> Create Invoice</a>}
-          {dash?.permissions?.priceShare&&<a href="/?share=true"><span>↗</span> Share Price List</a>}
-          {role==='Guest'&&<a className="welcome-primary" href="/login">Sign in to CTE Account</a>}
-        </div>
-      </section>
-
-      <section className="today-grid">
-        <StatusCard
-          icon="rate"
-          label="CNY → MMK"
-          value={rate?('1 CNY = '+Number(rate).toLocaleString('en-US')+' MMK'):(loading?'Checking rate…':'Rate unavailable')}
-          sub={rate?'Current price-list baseline':'Open Price List to configure rate'}
-          href="/"
-        />
-        <StatusCard
-          icon="price"
-          label="Price List"
-          value={activeProductCount!==undefined?activeProductCount+' active products':(loading?'Checking products…':'Product data unavailable')}
-          sub={liveCatalog?.updatedAt?'Published '+shortDate(liveCatalog.updatedAt):liveCatalog?.validity||'Current product catalog'}
-          href="/"
-        />
-        <StatusCard
-          icon="quote"
-          label="Quotations"
-          value={quotation
-            ? ((quotation.counts?.Draft||0)+(quotation.counts?.Sent||0))+' need attention'
-            : (loading?'Checking access…':'Locked')}
-          sub={quotation
-            ? (quotation.counts?.Draft||0)+' Draft · '+(quotation.counts?.Sent||0)+' Sent'
-            : (loading?'Verifying session':'Sign in required')}
-          attention={Boolean(quotation&&((quotation.counts?.Draft||0)+(quotation.counts?.Sent||0)>0))}
-          locked={!quotation&&!loading}
-          href="/quotation"
-        />
-        <StatusCard
-          icon="finance"
-          label="Finance"
-          value={finance
-            ? ((finance.counts?.Unpaid||0)+(finance.counts?.Partial||0))+' pending'
-            : (loading?'Checking access…':'Locked')}
-          sub={finance
-            ? (finance.counts?.Unpaid||0)+' Unpaid · '+(finance.counts?.Partial||0)+' Partial'
-            : (loading?'Verifying session':'Sign in required')}
-          attention={Boolean(finance&&((finance.counts?.Unpaid||0)+(finance.counts?.Partial||0)>0))}
-          locked={!finance&&!loading}
-          href="/finance"
-        />
-      </section>
-
-      <section className="attention-panel">
-        <div className="panel-heading">
-          <div><span>NEEDS ATTENTION</span><h2>Open work</h2></div>
-          <p>Draft quotations and unpaid invoices you can act on.</p>
-        </div>
-
-        {needsAttention.length
-          ? <div className="attention-list">
-              {needsAttention.map((x,i)=><a href={x.href} className="attention-row" key={x.kind+x.ref+i}>
-                <div className={'attention-type type-'+x.kind.toLowerCase()}>{x.kind==='Quotation'?'QT':'INV'}</div>
-                <div className="attention-main">
-                  <strong>{x.title}</strong>
-                  <span>{x.ref} · {x.kind}</span>
-                </div>
-                <div className={'attention-status state-'+String(x.status).toLowerCase()}>{x.status}</div>
-                <b>{x.amount}</b>
-                <Arrow/>
-              </a>)}
-            </div>
-          : <div className="attention-empty">
-              <div>✓</div>
-              <strong>{role==='Guest'?'No private activity loaded':'Nothing urgent right now'}</strong>
-              <span>{role==='Guest'?'Sign in to Quotations or Finance to surface work here.':'Your current dashboard has no open Draft/Sent quotations or unpaid invoices.'}</span>
-            </div>
-        }
-      </section>
-
-      <section className="module-section">
-        <div className="panel-heading">
-          <div><span>WORKSPACE</span><h2>Business modules</h2></div>
-          <p>Live status and key metrics across your core operations.</p>
-        </div>
-
-        <div className="module-grid">
-          <article className="module-card price-card">
-            <div className="module-card-head">
-              <div><MiniIcon type="price"/><span>Price List</span></div>
-              <a href="/">Open <Arrow/></a>
-            </div>
-            <h3>{liveCatalog?.title||'CTE Price List'}</h3>
-            <p>{liveCatalog?.validity||'Current published price list'}</p>
-            <div className="catalog-meta">
-              <div><span>Rate</span><b>{rate?('1 CNY = '+Number(rate).toLocaleString('en-US')+' MMK'):'—'}</b></div>
-              <div><span>Last published</span><b>{liveCatalog?.updatedAt?shortDate(liveCatalog.updatedAt):'Not recorded yet'}</b></div>
-              <div><span>Products</span><b>{activeProductCount??'—'}</b></div>
-            </div>
-            <div className="featured-products">
-              {(catalog
-                ? (catalog.sections||[]).flatMap(s=>(s.rows||[]).filter(r=>r.visible!==false)).slice(0,3).map(r=>({id:r.id,name:r.spec,retail:r.retail}))
-                : (dash?.catalog?.featured||[])
-              ).map(x=><div key={x.id}><span>{x.name}</span><b>{x.retail!==''?money(x.retail,'RMB'):'—'}</b></div>)}
-            </div>
-          </article>
-
-          <article className="module-card quote-card">
-            <div className="module-card-head">
-              <div><MiniIcon type="quote"/><span>Quotations</span></div>
-              <a href="/quotation">Open <Arrow/></a>
-            </div>
-            {quotation
-              ? <>
-                  <div className="metric-row">
-                    <div><b>{quotation.counts?.Draft||0}</b><span>Draft</span></div>
-                    <div><b>{quotation.counts?.Sent||0}</b><span>Sent</span></div>
-                    <div><b>{quotation.counts?.Accepted||0}</b><span>Accepted</span></div>
-                  </div>
-                  <div className="recent-list">
-                    {(quotation.recent||[]).map(x=><div key={x.id}>
-                      <span><strong>{x.customer}</strong><small>{x.quotationNo}</small></span>
-                      <b>{x.status}</b>
-                    </div>)}
-                  </div>
-                </>
-              : <div className="locked-summary"><span>Sales data is private.</span><a href="/quotation">Sign in to Quotations →</a></div>}
-          </article>
-
-          <article className="module-card finance-card">
-            <div className="module-card-head">
-              <div><MiniIcon type="finance"/><span>Finance</span></div>
-              <a href="/finance">Open <Arrow/></a>
-            </div>
-            {finance
-              ? <>
-                  <div className="metric-row">
-                    <div><b>{finance.counts?.Unpaid||0}</b><span>Unpaid</span></div>
-                    <div><b>{finance.counts?.Partial||0}</b><span>Partial</span></div>
-                    <div><b>{finance.counts?.Paid||0}</b><span>Paid</span></div>
-                  </div>
-                  <div className="finance-outstanding">
-                    <span>Outstanding</span>
-                    <div>
-                      {Number(finance.byCurrency?.CNY||0)>0&&<b>{money(finance.byCurrency.CNY,'CNY')}</b>}
-                      {Number(finance.byCurrency?.MMK||0)>0&&<b>{money(finance.byCurrency.MMK,'MMK')}</b>}
-                      {!Number(finance.byCurrency?.CNY||0)&&!Number(finance.byCurrency?.MMK||0)&&<b>0</b>}
-                    </div>
-                  </div>
-                </>
-              : <div className="locked-summary"><span>Finance data is private.</span><a href="/finance">Sign in to Finance →</a></div>}
-          </article>
-
-          <article className="module-card warehouse-card">
-            <div className="module-card-head">
-              <div><MiniIcon type="warehouse"/><span>Warehouse</span></div>
-              <span className="development-pill">In Development</span>
-            </div>
-            <h3>Inventory & stock control</h3>
-            <p>Available stock, reserved stock, incoming goods and serial-number tracking.</p>
-            <div className="warehouse-preview">
-              <div><span>Available</span><b>—</b></div>
-              <div><span>Reserved</span><b>—</b></div>
-              <div><span>Incoming</span><b>—</b></div>
-            </div>
-            <a className="preview-link" href="/warehouse">Preview module →</a>
-          </article>
-        </div>
-      </section>
-    </div>
-
-    <footer className="ops-footer">
-      <div><b>CTE</b><span>Online System</span></div>
-      <span>{role}</span>
-      <small>CTE Myanmar · Internal workspace</small>
-    </footer>
+    </section>
   </main>
 }
