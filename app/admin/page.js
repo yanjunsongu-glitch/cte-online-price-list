@@ -4,14 +4,16 @@ import {upload as blobUpload} from '@vercel/blob/client';
 const cp=x=>JSON.parse(JSON.stringify(x));
 
 export default function Admin(){
-  const [u,setU]=useState('admin');
-  const [p,setP]=useState('');
   const [d,setD]=useState(null);
   const [msg,setMsg]=useState('');
   const [shares,setShares]=useState([]);
 
   async function load(){
     const r=await fetch('/api/admin/catalog',{cache:'no-store'});
+    if(r.status===401||r.status===403){
+      window.location.replace('/login?next=/admin');
+      return;
+    }
     if(r.ok){
       const j=await r.json();
       j.labels=j.labels||{};
@@ -53,11 +55,6 @@ export default function Admin(){
   }
   useEffect(()=>{load()},[]);
 
-  async function login(e){
-    e.preventDefault();
-    const r=await fetch('/api/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:u,password:p})});
-    if(r.ok){setMsg('Logged in');load()}else setMsg('Login failed');
-  }
 
   function patch(si,ri,k,v){
     setD(x=>{const n=cp(x);n.sections[si].rows[ri][k]=v;return n});
@@ -167,7 +164,7 @@ export default function Admin(){
     setMsg(r.ok?'Published successfully.':'Save failed');
   }
 
-  if(!d)return <main className="admin-shell"><a className="system-back-link" href="/system">← CTE Online System</a><div className="login-card"><img className="admin-brand-logo" src="/icon.svg" alt="CTE"/><h1>CTE Price List Admin</h1><form onSubmit={login}><input value={u} onChange={e=>setU(e.target.value)} placeholder="Username"/><input type="password" value={p} onChange={e=>setP(e.target.value)} placeholder="Password"/><button>Login</button></form><p>{msg||'Authorized staff only.'}</p><a href="/">Customer View</a></div></main>;
+  if(!d)return <main className="admin-shell"><a className="system-back-link" href="/system">← CTE Online System</a><div className="login-card"><img className="admin-brand-logo" src="/icon.svg" alt="CTE"/><h1>Loading Price List Admin…</h1><p>Checking your CTE Account permissions.</p></div></main>;
 
   return <main className="admin-shell">
     <div className="admin-top">
