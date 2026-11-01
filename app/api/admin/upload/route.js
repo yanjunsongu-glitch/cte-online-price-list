@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {handleUpload} from '@vercel/blob/client';
-import {hasPermission,systemSessionFromRequest} from '@/lib/systemAuth';
+import {hasPermission,validatedSystemSessionFromRequest} from '@/lib/systemAuth';
 
 function safeName(v){
   return String(v||'file').replace(/[^a-zA-Z0-9._-]/g,'_');
@@ -14,7 +14,7 @@ export async function POST(request){
       body,
       request,
       onBeforeGenerateToken:async(pathname,clientPayload)=>{
-        const unified=systemSessionFromRequest(request);
+        const unified=await validatedSystemSessionFromRequest(request);
         if(!(unified&&hasPermission(unified,'price.edit'))) throw new Error('Unauthorized');
 
         let meta={};
