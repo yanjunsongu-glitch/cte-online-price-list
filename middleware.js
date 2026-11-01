@@ -16,14 +16,18 @@ function textBytes(value){return new TextEncoder().encode(value)}
 async function verifyToken(token){
   if(!token||!token.includes('.'))return null;
   const [body,sig]=token.split('.');
-  const secret=process.env.CTE_SYSTEM_AUTH_SECRET||process.env.CTE_AUTH_SECRET||'change-me-system-auth';
+  const secrets=[...new Set([process.env.CTE_SYSTEM_AUTH_SECRET,process.env.CTE_AUTH_SECRET,'change-me-system-auth'].filter(Boolean))];
   try{
-    const key=await crypto.subtle.importKey('raw',textBytes(secret),{name:'HMAC',hash:'SHA-256'},false,['verify']);
-    const ok=await crypto.subtle.verify('HMAC',key,base64UrlToBytes(sig),textBytes(body));
-    if(!ok)return null;
-    const payload=JSON.parse(new TextDecoder().decode(base64UrlToBytes(body)));
-    if(!payload?.exp||payload.exp<=Date.now())return null;
-    return payload;
+    for(const secret of secrets){
+      const key=await crypto.subtle.importKey('raw',textBytes(secret),{name:'HMAC',hash:'SHA-256'},false,['verify']);
+      const ok=await crypto.subtle.verify('HMAC',key,base64UrlToBytes(sig),textBytes(body));
+      if(ok){
+        const payload=JSON.parse(new TextDecoder().decode(base64UrlToBytes(body)));
+        if(!payload?.exp||payload.exp<=Date.now())return null;
+        return payload;
+      }
+    }
+    return null;
   }catch{return null}
 }
 function hasPermission(session,permission){
