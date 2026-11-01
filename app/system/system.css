@@ -161,3 +161,12 @@ a{color:inherit}
   }
   .account-chevron{display:none}
 }
+
+.account-menu-admin button{
+  width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:8px;border:0;border-radius:10px;background:transparent;color:#858a94;
+  font:inherit;text-align:left;cursor:pointer;transition:.16s ease
+}
+.account-menu-admin button:hover{background:#f6f7f9;color:#4b505a}
+.account-menu-admin button span{font-size:8px;font-weight:800}
+.account-menu-admin button small{font-size:6.5px;color:#a1a5ae}
