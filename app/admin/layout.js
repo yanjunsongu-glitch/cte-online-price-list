@@ -1,0 +1,1 @@
+export const metadata={title:'Admin — CTE'};export default function Layout({children}){return children}
