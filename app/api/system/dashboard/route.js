@@ -1,8 +1,5 @@
 import {NextResponse} from 'next/server';
 import {getCatalog} from '@/lib/catalog';
-import {sessionFromRequest} from '@/lib/auth';
-import {quotationSessionFromRequest} from '@/lib/quotationAuth';
-import {financeSessionFromRequest} from '@/lib/financeAuth';
 import {hasPermission,systemSessionFromRequest} from '@/lib/systemAuth';
 import {listQuotations} from '@/lib/quotations';
 import {listInvoices} from '@/lib/invoices';
@@ -37,30 +34,22 @@ function summarizeInvoices(items=[]){
   };
 }
 function roleLabel(session){
-  if(!session)return null;
-  if(session.role==='super_admin')return 'Super Admin';
-  if(session.role==='admin')return 'Admin';
-  if(session.role==='staff')return 'Staff';
-  return null;
+  if(session?.role==='super_admin')return 'Super Admin';
+  if(session?.role==='admin')return 'Admin';
+  if(session?.role==='staff')return 'Staff';
+  return 'Staff';
 }
 
 export async function GET(req){
-  const unified=systemSessionFromRequest(req);
-  const legacyAdmin=!unified?sessionFromRequest(req):null;
-  const quotation=!unified?quotationSessionFromRequest(req):null;
-  const finance=!unified?financeSessionFromRequest(req):null;
+  const session=systemSessionFromRequest(req);
+  if(!session)return NextResponse.json({error:'Unauthorized'},{status:401});
 
   const catalog=await getCatalog();
-  const role=roleLabel(unified)||(legacyAdmin?'Super Admin':finance?'Finance':quotation?'Sales':'Guest');
-  const username=unified?.username||legacyAdmin?.username||finance?.username||quotation?.username||'';
-  const fullName=unified?.fullName||username;
-  const department=unified?.department||'';
-
-  const quotationAllowed=unified?hasPermission(unified,'quotation.view'):Boolean(legacyAdmin||quotation);
-  const financeAllowed=unified?hasPermission(unified,'finance.view'):Boolean(legacyAdmin||finance);
-  const priceAdminAllowed=unified?hasPermission(unified,'price.edit'):Boolean(legacyAdmin);
-  const userAdminAllowed=unified?hasPermission(unified,'users.view')||hasPermission(unified,'users.manage'):false;
-  const warehouseAllowed=unified?hasPermission(unified,'warehouse.view'):false;
+  const quotationAllowed=hasPermission(session,'quotation.view');
+  const financeAllowed=hasPermission(session,'finance.view');
+  const priceAdminAllowed=hasPermission(session,'price.edit');
+  const userAdminAllowed=hasPermission(session,'users.view')||hasPermission(session,'users.manage');
+  const warehouseAllowed=hasPermission(session,'warehouse.view');
 
   let quotationSummary=null;
   let financeSummary=null;
@@ -77,14 +66,17 @@ export async function GET(req){
   }));
 
   return NextResponse.json({
-    role,username,fullName,department,
+    role:roleLabel(session),
+    username:session.username||'',
+    fullName:session.fullName||session.username||'',
+    department:session.department||'',
     permissions:{
       admin:priceAdminAllowed,
       users:userAdminAllowed,
       quotation:quotationAllowed,
       finance:financeAllowed,
       warehouse:warehouseAllowed,
-      priceShare:unified?hasPermission(unified,'price.share'):Boolean(legacyAdmin||quotation)
+      priceShare:hasPermission(session,'price.share')
     },
     catalog:{
       title:catalog.title||'CTE Price List',
