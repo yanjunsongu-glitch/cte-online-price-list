@@ -94,7 +94,7 @@ export default function Home(){
 
   const sections=useMemo(()=>!data?[]:data.sections.map(s=>({
     ...s,
-    rows:s.rows.filter(r=>r.visible!==false && (!q || (r.spec+' '+r.remarks).toLowerCase().includes(q.toLowerCase())))
+    rows:s.rows.filter(r=>r.visible!==false && r.archived!==true && (!q || (r.spec+' '+r.remarks).toLowerCase().includes(q.toLowerCase())))
   })).filter(s=>s.rows.length),[data,q]);
 
   const visibleIds=useMemo(()=>sections.flatMap(s=>s.rows.map(r=>r.id)),[sections]);
