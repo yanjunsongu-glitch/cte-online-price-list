@@ -37,7 +37,7 @@ export default function Finance(){
   const [msg,setMsg]=useState('');
 
   const products=useMemo(()=>!catalog?[]:catalog.sections.flatMap(section=>
-    section.rows.map(row=>({section:section.name,...row}))
+    section.rows.filter(row=>row.archived!==true&&row.visible!==false).map(row=>({section:section.name,...row}))
   ),[catalog]);
 
   async function load(){
