@@ -5,7 +5,7 @@ import {getInvoice,listInvoices,saveInvoice} from '@/lib/invoices';
 
 function unified(s){return ['super_admin','admin','staff'].includes(s?.role)}
 export async function GET(req){
-  const session=financeSessionFromRequest(req);
+  const session=await financeSessionFromRequest(req);
   if(!session)return NextResponse.json({error:'Unauthorized'},{status:401});
   if(unified(session)&&!hasPermission(session,'finance.view'))return NextResponse.json({error:'Forbidden'},{status:403});
   const id=new URL(req.url).searchParams.get('id');
@@ -17,7 +17,7 @@ export async function GET(req){
   return NextResponse.json({items:await listInvoices(100),user:session.username});
 }
 export async function POST(req){
-  const session=financeSessionFromRequest(req);
+  const session=await financeSessionFromRequest(req);
   if(!session)return NextResponse.json({error:'Unauthorized'},{status:401});
   if(unified(session)&&!(hasPermission(session,'finance.create')||hasPermission(session,'finance.edit')))return NextResponse.json({error:'Forbidden'},{status:403});
   const body=await req.json().catch(()=>null);
