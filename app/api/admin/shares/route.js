@@ -1,9 +1,9 @@
 import {NextResponse} from 'next/server';
-import {hasPermission,systemSessionFromRequest} from '@/lib/systemAuth';
+import {hasPermission,validatedSystemSessionFromRequest} from '@/lib/systemAuth';
 import {createShare,listShares,setShareActive} from '@/lib/shares';
 
 function shareSession(req){
-  const session=systemSessionFromRequest(req);
+  const session=await validatedSystemSessionFromRequest(req);
   return session&&hasPermission(session,'price.share')?session:null;
 }
 export async function GET(req){
