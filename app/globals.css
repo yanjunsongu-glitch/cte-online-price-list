@@ -3414,3 +3414,7 @@ footer{
     justify-content:center;
   }
 }
+
+/* Unified transparent CTE brand assets */
+.finance-login-logo{display:block!important;width:76px!important;height:76px!important;object-fit:contain!important;margin:0 auto 10px!important;background:transparent!important;border-radius:0!important;color:transparent!important}
+.invoice-logo{display:block!important;width:76px!important;height:76px!important;object-fit:contain!important;background:transparent!important;border-radius:0!important;color:transparent!important}
