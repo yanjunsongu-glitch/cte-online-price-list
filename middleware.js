@@ -2,7 +2,7 @@ import {NextResponse} from 'next/server';
 
 const COOKIE='cte_system_session';
 const PUBLIC_PREFIXES=[
-  '/login','/share/','/api/share/','/api/system/login','/api/system/logout','/api/system/me',
+  '/login','/share/','/api/share/','/api/system/login','/api/system/logout','/api/system/me','/api/security-status',
   '/_next/','/icon.svg','/favicon.ico','/robots.txt'
 ];
 
