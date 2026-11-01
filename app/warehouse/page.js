@@ -4,7 +4,7 @@ import './warehouse.css';
 export default function Warehouse(){
   return <main className="warehouse-shell">
     <header className="warehouse-top">
-      <a href="/system">← CTE Online System</a>
+      <a className="warehouse-brand" href="/system"><img src="/icon.svg" alt="CTE"/><span>CTE Online</span></a>
       <div>
         <span>OPERATIONS</span>
         <h1>Warehouse</h1>
