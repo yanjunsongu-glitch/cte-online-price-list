@@ -37,8 +37,6 @@ function warrantyFor(name,remarks){
 
 export default function Quotation(){
   const [logged,setLogged]=useState(null);
-  const [user,setUser]=useState('');
-  const [pass,setPass]=useState('');
   const [catalog,setCatalog]=useState(null);
   const [history,setHistory]=useState([]);
   const [q,setQ]=useState(emptyQuotation());
@@ -54,7 +52,7 @@ export default function Quotation(){
       fetch('/api/quotation/records',{cache:'no-store'}),
       fetch('/api/catalog',{cache:'no-store'})
     ]);
-    if(a.status===401){setLogged(false);return}
+    if(a.status===401){window.location.replace('/login?next=/quotation');return}
     if(a.ok){
       const j=await a.json();
       setHistory(j.items||[]);
@@ -80,15 +78,9 @@ export default function Quotation(){
     window.history.replaceState({},'',window.location.pathname);
   },[logged,catalog]);
 
-  async function login(e){
-    e.preventDefault();
-    const r=await fetch('/api/quotation/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:user,password:pass})});
-    if(!r.ok){setMsg('Login failed');return}
-    setPass('');setMsg('');await load();
-  }
   async function logout(){
-    await fetch('/api/quotation/logout',{method:'POST'});
-    setLogged(false);setHistory([]);setQ(emptyQuotation());
+    await fetch('/api/system/logout',{method:'POST'});
+    window.location.replace('/login');
   }
 
   function patch(k,v){setQ(x=>({...x,[k]:v}))}
@@ -175,18 +167,6 @@ export default function Quotation(){
   },[q.items]);
 
   if(logged===null)return <main className="quotation-shell"><div className="quotation-loading">Loading Quotation System…</div></main>;
-  if(logged===false)return <main className="quotation-login-page">
-    <form className="quotation-login-card" onSubmit={login}>
-      <img className="quotation-login-logo" src={CTE_BRAND_LOGO} alt="CTE"/>
-      <h1>Quotation System</h1>
-      <p>Create professional CTE customer quotations.</p>
-      <label>Username<input value={user} onChange={e=>setUser(e.target.value)} autoComplete="username"/></label>
-      <label>Password<input type="password" value={pass} onChange={e=>setPass(e.target.value)} autoComplete="current-password"/></label>
-      <button>Login</button>
-      <span>{msg}</span>
-      <a href="/">Back to Price List</a>
-    </form>
-  </main>;
 
   return <main className="quotation-shell">
     <header className="quotation-top no-print"><a className="module-system-link" href="/system">← CTE Online System</a>
