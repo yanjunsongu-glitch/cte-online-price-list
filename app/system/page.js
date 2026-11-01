@@ -102,6 +102,12 @@ export default function SystemDashboard(){
     : dash?.catalog?.activeProductCount;
   const quotation=dash?.quotations;
   const finance=dash?.finance;
+  const displayName=dash?.fullName||username;
+
+  async function systemLogout(){
+    await fetch('/api/system/logout',{method:'POST'}).catch(()=>{});
+    window.location.replace('/login');
+  }
 
   const needsAttention=useMemo(()=>{
     const rows=[];
@@ -146,40 +152,40 @@ export default function SystemDashboard(){
       <nav className="ops-nav">
         <a className="active" href="/system">Dashboard</a>
         <a href="/">Price List</a>
-        <a href="/quotation">Quotations</a>
-        <a href="/finance">Finance</a>
-        <a href="/warehouse">Warehouse</a>
+        {dash?.permissions?.quotation&&<a href="/quotation">Quotations</a>}
+        {dash?.permissions?.finance&&<a href="/finance">Finance</a>}
+        {dash?.permissions?.warehouse&&<a href="/warehouse">Warehouse</a>}
       </nav>
 
       <div className="account-menu-wrap">
         <button className={accountOpen?'account-chip is-open':'account-chip'} onClick={()=>setAccountOpen(x=>!x)} aria-expanded={accountOpen}>
-          <div className="account-avatar">{username==='Team Member'?'T':username.slice(0,1).toUpperCase()}</div>
-          <div><strong>{username}</strong><span>{role}</span></div>
+          <div className="account-avatar">{displayName==='Team Member'?'T':displayName.slice(0,1).toUpperCase()}</div>
+          <div><strong>{displayName}</strong><span>{role}</span></div>
           <span className="account-chevron">⌄</span>
         </button>
 
         {accountOpen&&<div className="account-menu">
           <div className="account-menu-head">
-            <div className="account-menu-avatar">{username==='Team Member'?'T':username.slice(0,1).toUpperCase()}</div>
-            <div><strong>{username}</strong><span>{role==='Guest'?'Not signed in':role}</span></div>
+            <div className="account-menu-avatar">{displayName==='Team Member'?'T':displayName.slice(0,1).toUpperCase()}</div>
+            <div><strong>{displayName}</strong><span>{role==='Guest'?'Not signed in':role}</span></div>
           </div>
 
           <div className="account-menu-section">
             <span>WORKSPACE</span>
             <a href="/"><b>Price List</b><small>Open current prices</small></a>
-            <a href="/quotation">
-              <b>{dash?.permissions?.quotation?'Quotations':'Sign in to Quotations'}</b>
-              <small>{dash?.permissions?.quotation?'Open sales workspace':'Sales access required'}</small>
-            </a>
-            <a href="/finance">
-              <b>{dash?.permissions?.finance?'Finance':'Sign in to Finance'}</b>
-              <small>{dash?.permissions?.finance?'Open finance workspace':'Finance access required'}</small>
-            </a>
-            <a href="/warehouse"><b>Warehouse</b><small>Preview inventory module</small></a>
+            {dash?.permissions?.quotation&&<a href="/quotation"><b>Quotations</b><small>Open sales workspace</small></a>}
+            {dash?.permissions?.finance&&<a href="/finance"><b>Finance</b><small>Open finance workspace</small></a>}
+            {dash?.permissions?.warehouse&&<a href="/warehouse"><b>Warehouse</b><small>Open inventory workspace</small></a>}
+            {dash?.permissions?.users&&<a href="/admin/users"><b>Users & Access</b><small>Manage accounts and permissions</small></a>}
           </div>
 
           <div className="account-menu-admin">
-            <a href="/admin"><span>Admin Console</span><small>{dash?.permissions?.admin?'Super Admin access':'Restricted access'}</small></a>
+            {role==='Guest'
+              ? <a href="/login"><span>Sign in</span><small>CTE Account</small></a>
+              : <>
+                  {dash?.permissions?.admin&&<a href="/admin"><span>Price List Admin</span><small>Manage catalog</small></a>}
+                  <button type="button" onClick={systemLogout}><span>Sign out</span><small>{role}</small></button>
+                </>}
           </div>
         </div>}
       </div>
@@ -193,14 +199,15 @@ export default function SystemDashboard(){
             <i>·</i>
             <span className="workspace-inline"><b/>Workspace online</span>
           </div>
-          <h1>{role==='Guest'?'CTE Online System':'Welcome back, '+username}</h1>
+          <h1>{role==='Guest'?'CTE Online System':'Welcome back, '+displayName}</h1>
           {role==='Guest'&&<p>Sign in to Quotations or Finance to see private business summaries.</p>}
         </div>
 
         <div className="welcome-actions">
-          <a className="welcome-primary" href="/quotation?new=true"><span>＋</span> New Quotation</a>
-          <a href="/finance?new=true"><span>＋</span> Create Invoice</a>
-          <a href="/?share=true"><span>↗</span> Share Price List</a>
+          {dash?.permissions?.quotation&&<a className="welcome-primary" href="/quotation?new=true"><span>＋</span> New Quotation</a>}
+          {dash?.permissions?.finance&&<a href="/finance?new=true"><span>＋</span> Create Invoice</a>}
+          {dash?.permissions?.priceShare&&<a href="/?share=true"><span>↗</span> Share Price List</a>}
+          {role==='Guest'&&<a className="welcome-primary" href="/login">Sign in to CTE Account</a>}
         </div>
       </section>
 
