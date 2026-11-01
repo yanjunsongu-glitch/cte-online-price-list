@@ -34,6 +34,7 @@ function requiredPermission(pathname){
   if(pathname.startsWith('/quotation'))return 'quotation.view';
   if(pathname.startsWith('/finance'))return 'finance.view';
   if(pathname.startsWith('/warehouse'))return 'warehouse.view';
+  if(pathname.startsWith('/admin/activity'))return 'activity.view';
   if(pathname.startsWith('/admin/users'))return 'users.view';
   if(pathname==='/admin'||pathname.startsWith('/admin/'))return 'price.edit';
   return null;
