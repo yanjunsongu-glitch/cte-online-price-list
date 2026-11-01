@@ -1,12 +1,10 @@
 import {NextResponse} from 'next/server';
-import {sessionFromRequest} from '@/lib/auth';
 import {hasPermission,systemSessionFromRequest} from '@/lib/systemAuth';
 import {createShare,listShares,setShareActive} from '@/lib/shares';
 
 function shareSession(req){
-  const unified=systemSessionFromRequest(req);
-  if(unified&&hasPermission(unified,'price.share'))return unified;
-  return sessionFromRequest(req);
+  const session=systemSessionFromRequest(req);
+  return session&&hasPermission(session,'price.share')?session:null;
 }
 export async function GET(req){
   const session=shareSession(req);
