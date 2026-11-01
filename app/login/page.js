@@ -30,7 +30,7 @@ export default function Login(){
 
   return <main className="cte-login">
     <section className="cte-login-panel">
-      <a className="cte-login-brand" href="/system"><span>CTE</span><div><b>CTE Online</b><small>Internal Business System</small></div></a>
+      <a className="cte-login-brand" href="/system"><img src="/icon.svg" alt="CTE"/><div><b>CTE Online</b><small>Internal Business System</small></div></a>
       <div className="cte-login-copy">
         <span>CTE ACCOUNT</span>
         <h1>Sign in to your workspace</h1>
