@@ -56,8 +56,8 @@ export default function SystemDashboard(){
   useEffect(()=>{
     let active=true;
     Promise.allSettled([
-      fetch('/api/system/dashboard',{cache:'no-store'}).then(r=>r.ok?r.json():null),
-      fetch('/api/catalog',{cache:'no-store'}).then(r=>r.ok?r.json():null)
+      fetch('/api/system/dashboard',{cache:'no-store'}).then(r=>{if(r.status===401){window.location.replace('/login?next=/system');return null}return r.ok?r.json():null}),
+      fetch('/api/catalog',{cache:'no-store'}).then(r=>{if(r.status===401){window.location.replace('/login?next=/system');return null}return r.ok?r.json():null})
     ]).then(results=>{
       if(!active)return;
       setDash(results[0].status==='fulfilled'?results[0].value:null);
@@ -128,6 +128,7 @@ export default function SystemDashboard(){
       <div className="side-label">SYSTEM</div>
       <nav className="side-nav side-secondary">
         {dash?.permissions?.admin&&<a href="/admin"><Icon type="price"/><span>Price Admin</span></a>}
+        {dash?.permissions?.activity&&<a href="/admin/activity"><Icon type="staff"/><span>Activity Log</span></a>}
         <a href="/login"><Icon type="staff"/><span>Account</span></a>
       </nav>
 
@@ -154,6 +155,7 @@ export default function SystemDashboard(){
             <a href="/">Price List</a>
             {dash?.permissions?.users&&<a href="/admin/users">Users & Access</a>}
             {dash?.permissions?.admin&&<a href="/admin">Price List Admin</a>}
+            {dash?.permissions?.activity&&<a href="/admin/activity">Activity Log</a>}
             {role==='Guest'?<a className="account-primary" href="/login">Sign in</a>:<button onClick={logout}>Sign out</button>}
           </div>}
         </div>
