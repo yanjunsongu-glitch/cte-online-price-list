@@ -39,7 +39,7 @@ export default function Home(){
   const dragRef=useRef(null);
 
   useEffect(()=>{
-    fetch('/api/catalog',{cache:'no-store'}).then(r=>r.json()).then(j=>{
+    fetch('/api/catalog',{cache:'no-store'}).then(r=>{if(r.status===401){window.location.replace('/login?next=/');throw new Error('Unauthorized')}if(!r.ok)throw new Error('Catalog unavailable');return r.json()}).then(j=>{
       setData(j);
       const saved=typeof window!=='undefined'?window.localStorage.getItem('cteTodayCnyMmkRate'):'';
       setTodayRate(saved||String(j.rate||''));
