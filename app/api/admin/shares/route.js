@@ -1,6 +1,7 @@
 import {NextResponse} from 'next/server';
 import {hasPermission,validatedSystemSessionFromRequest} from '@/lib/systemAuth';
 import {createShare,listShares,setShareActive} from '@/lib/shares';
+import {writeActivity} from '@/lib/activity';
 
 function shareSession(req){
   const session=await validatedSystemSessionFromRequest(req);
@@ -21,6 +22,7 @@ export async function POST(req){
     createdBy:session.username,
     customerName:body.customerName||''
   });
+  await writeActivity({actor:session.username,module:'price-list',action:'share-create',objectType:'share',objectId:record.token,after:{customerName:record.customerName,expiresAt:record.expiresAt}});
   return NextResponse.json({token:record.token,expiresAt:record.expiresAt,customerName:record.customerName});
 }
 export async function PATCH(req){
@@ -30,5 +32,6 @@ export async function PATCH(req){
   if(!body?.token||typeof body.active!=='boolean')return NextResponse.json({error:'Invalid request'},{status:400});
   const record=await setShareActive(body.token,body.active);
   if(!record)return NextResponse.json({error:'Not found'},{status:404});
+  await writeActivity({actor:session.username,module:'price-list',action:body.active?'share-enable':'share-disable',objectType:'share',objectId:body.token,after:{active:record.active}});
   return NextResponse.json({ok:true,active:record.active});
 }
