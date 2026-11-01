@@ -1,15 +1,20 @@
 import {NextResponse} from 'next/server';
 import {sessionFromRequest} from '@/lib/auth';
+import {hasPermission,systemSessionFromRequest} from '@/lib/systemAuth';
 import {createShare,listShares,setShareActive} from '@/lib/shares';
 
+function shareSession(req){
+  const unified=systemSessionFromRequest(req);
+  if(unified&&hasPermission(unified,'price.share'))return unified;
+  return sessionFromRequest(req);
+}
 export async function GET(req){
-  const session=sessionFromRequest(req);
+  const session=shareSession(req);
   if(!session)return NextResponse.json({error:'Unauthorized'},{status:401});
   return NextResponse.json({items:await listShares(100),user:session.username});
 }
-
 export async function POST(req){
-  const session=sessionFromRequest(req);
+  const session=shareSession(req);
   if(!session)return NextResponse.json({error:'Unauthorized'},{status:401});
   const body=await req.json().catch(()=>null);
   if(!body?.snapshot)return NextResponse.json({error:'Invalid share snapshot'},{status:400});
@@ -18,15 +23,10 @@ export async function POST(req){
     createdBy:session.username,
     customerName:body.customerName||''
   });
-  return NextResponse.json({
-    token:record.token,
-    expiresAt:record.expiresAt,
-    customerName:record.customerName
-  });
+  return NextResponse.json({token:record.token,expiresAt:record.expiresAt,customerName:record.customerName});
 }
-
 export async function PATCH(req){
-  const session=sessionFromRequest(req);
+  const session=shareSession(req);
   if(!session)return NextResponse.json({error:'Unauthorized'},{status:401});
   const body=await req.json().catch(()=>null);
   if(!body?.token||typeof body.active!=='boolean')return NextResponse.json({error:'Invalid request'},{status:400});
