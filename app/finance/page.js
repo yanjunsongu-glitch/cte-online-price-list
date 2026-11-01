@@ -156,7 +156,7 @@ export default function Finance(){
   if(logged===null)return <main className="finance-shell"><div className="finance-loading">Loading Finance…</div></main>;
   if(logged===false)return <main className="finance-login-page">
     <form className="finance-login-card" onSubmit={login}>
-      <div className="finance-login-logo">CTE</div>
+      <img className="finance-login-logo" src="/icon.svg" alt="CTE"/>
       <h1>CTE Finance</h1>
       <p>Invoice System · Authorized staff only</p>
       <label>Username<input value={user} onChange={e=>setUser(e.target.value)} autoComplete="username"/></label>
@@ -183,7 +183,7 @@ export default function Finance(){
         <div className="invoice-doc">
           <div className="invoice-header">
             <div>
-              <div className="invoice-logo">CTE</div>
+              <img className="invoice-logo" src="/icon.svg" alt="CTE"/>
               <h2>{catalog?.company?.name||'CTE MYANMAR CO.,LTD'}</h2>
               <p>{catalog?.company?.address}</p>
               <p>{catalog?.company?.tel}</p>
