@@ -1,6 +1,7 @@
 import {NextResponse} from 'next/server';
 import {hasPermission,validatedSystemSessionFromRequest} from '@/lib/systemAuth';
 import {createSystemUser,listSystemUsers,updateSystemUser} from '@/lib/systemUsers';
+import {writeActivity} from '@/lib/activity';
 
 function canView(session){return hasPermission(session,'users.view')||hasPermission(session,'users.manage')}
 function canManage(session){return hasPermission(session,'users.manage')}
@@ -16,7 +17,9 @@ export async function POST(req){
   const body=await req.json().catch(()=>null);
   if(!body)return NextResponse.json({error:'Invalid user'},{status:400});
   try{
-    return NextResponse.json(await createSystemUser(body,session));
+    const created=await createSystemUser(body,session);
+    await writeActivity({actor:session.username,module:'users',action:'create',objectType:'user',objectId:created.id,after:{username:created.username,role:created.role,department:created.department,status:created.status,permissions:created.permissions}});
+    return NextResponse.json(created);
   }catch(e){
     return NextResponse.json({error:e?.message||'Could not create user'},{status:400});
   }
@@ -27,7 +30,10 @@ export async function PATCH(req){
   const body=await req.json().catch(()=>null);
   if(!body?.id)return NextResponse.json({error:'User ID required'},{status:400});
   try{
-    return NextResponse.json(await updateSystemUser(body.id,body,session));
+    const before=(await listSystemUsers()).find(x=>x.id===body.id)||null;
+    const updated=await updateSystemUser(body.id,body,session);
+    await writeActivity({actor:session.username,module:'users',action:'update',objectType:'user',objectId:updated.id,before:before?{username:before.username,role:before.role,department:before.department,status:before.status,permissions:before.permissions}:null,after:{username:updated.username,role:updated.role,department:updated.department,status:updated.status,permissions:updated.permissions}});
+    return NextResponse.json(updated);
   }catch(e){
     return NextResponse.json({error:e?.message||'Could not update user'},{status:400});
   }
