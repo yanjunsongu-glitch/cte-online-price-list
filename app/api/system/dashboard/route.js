@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {getCatalog} from '@/lib/catalog';
-import {hasPermission,systemSessionFromRequest} from '@/lib/systemAuth';
+import {hasPermission,validatedSystemSessionFromRequest} from '@/lib/systemAuth';
 import {listQuotations} from '@/lib/quotations';
 import {listInvoices} from '@/lib/invoices';
 
@@ -41,7 +41,7 @@ function roleLabel(session){
 }
 
 export async function GET(req){
-  const session=systemSessionFromRequest(req);
+  const session=await validatedSystemSessionFromRequest(req);
   if(!session)return NextResponse.json({error:'Unauthorized'},{status:401});
 
   const catalog=await getCatalog();
