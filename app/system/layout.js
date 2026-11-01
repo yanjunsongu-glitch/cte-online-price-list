@@ -1,0 +1,1 @@
+export const metadata={title:'Dashboard — CTE'};export default function Layout({children}){return children}
