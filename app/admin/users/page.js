@@ -12,7 +12,7 @@ const PERMISSIONS=[
 const DEPARTMENTS=['Management','Sales','Pre-sales','After-sales','Finance','Warehouse','Other'];
 
 function roleLabel(v){return v==='super_admin'?'Super Admin':v==='admin'?'Admin':'Staff'}
-function statusLabel(v){return v==='pending'?'Pending Approval':v==='active'?'Active':'Disabled'}
+function statusLabel(v){return v==='pending'?'Pending Approval':v==='setup_required'?'Waiting for Password':v==='active'?'Active':'Disabled'}
 function date(v){if(!v)return 'Never';try{return new Date(v).toLocaleString()}catch{return '—'}}
 
 export default function Users(){
@@ -20,9 +20,10 @@ export default function Users(){
   const [users,setUsers]=useState([]);
   const [loading,setLoading]=useState(true);
   const [msg,setMsg]=useState('');
+  const [setupLink,setSetupLink]=useState('');
   const [open,setOpen]=useState(false);
   const [editing,setEditing]=useState(null);
-  const [form,setForm]=useState({fullName:'',username:'',email:'',phone:'',password:'',role:'staff',department:'Sales',status:'active',permissions:[]});
+  const [form,setForm]=useState({fullName:'',username:'',email:'',phone:'',role:'staff',department:'Sales',status:'active',permissions:[]});
 
   async function load(){
     const [a,b]=await Promise.all([
@@ -40,10 +41,10 @@ export default function Users(){
   const canManage=useMemo(()=>me&&(me.role==='super_admin'||me.permissions?.includes('*')||me.permissions?.includes('users.manage')),[me]);
 
   function startNew(){
-    setEditing(null);setForm({fullName:'',username:'',email:'',phone:'',password:'',role:'staff',department:'Sales',status:'active',permissions:[]});setOpen(true);setMsg('');
+    setEditing(null);setForm({fullName:'',username:'',email:'',phone:'',role:'staff',department:'Sales',status:'active',permissions:[]});setOpen(true);setMsg('');setSetupLink('');
   }
   function startEdit(u){
-    setEditing(u.id);setForm({fullName:u.fullName||'',username:u.username,email:u.email||'',phone:u.phone||'',password:'',role:u.role,department:u.department||'Other',status:u.status||'active',permissions:u.permissions||[]});setOpen(true);setMsg('');
+    setEditing(u.id);setForm({fullName:u.fullName||'',username:u.username,email:u.email||'',phone:u.phone||'',role:u.role,department:u.department||'Other',status:u.status==='setup_required'?'active':u.status||'active',permissions:u.permissions||[]});setOpen(true);setMsg('');setSetupLink('');
   }
   function togglePermission(p){
     setForm(x=>({...x,permissions:x.permissions.includes(p)?x.permissions.filter(y=>y!==p):[...x.permissions,p]}));
@@ -55,7 +56,9 @@ export default function Users(){
     const r=await fetch('/api/system/users',{method,headers:{'content-type':'application/json'},body:JSON.stringify(body)});
     const j=await r.json().catch(()=>({}));
     if(!r.ok){setMsg(j.error||'Could not save account.');return}
-    setMsg(editing?'Account updated.':'Account created.');setOpen(false);await load();
+    if(j.setupToken){setSetupLink(window.location.origin+'/activate#'+encodeURIComponent(j.setupToken));setMsg('Approved. Share the one-time activation link with the employee. It expires in 24 hours.');}
+    else setMsg(editing?'Account updated.':'Account created.');
+    setOpen(false);await load();
   }
   async function logout(){
     await fetch('/api/system/logout',{method:'POST'});window.location.replace('/login');
@@ -81,7 +84,7 @@ export default function Users(){
         <div><span>Super Admin</span><b>{users.filter(x=>x.role==='super_admin').length}</b></div>
         <div><span>Admin</span><b>{users.filter(x=>x.role==='admin').length}</b></div>
         <div><span>Staff</span><b>{users.filter(x=>x.role==='staff').length}</b></div>
-        <div><span>Pending</span><b>{users.filter(x=>x.status==='pending').length}</b></div>
+        <div><span>Pending</span><b>{users.filter(x=>x.status==='pending'||x.status==='setup_required').length}</b></div>
       </section>
 
       <section className="users-card">
@@ -94,13 +97,14 @@ export default function Users(){
             <div className="muted">{u.permissions?.includes('*')?'All modules':(u.permissions||[]).length+' permissions'}</div>
             <div><span className={'status-pill status-'+u.status}>{statusLabel(u.status)}</span></div>
             <div className="muted">{date(u.lastLoginAt)}</div>
-            <div>{canManage&&<button className="edit-user" onClick={()=>startEdit(u)}>{u.status==='pending'?'Review':'Edit'}</button>}</div>
+            <div>{canManage&&<button className="edit-user" onClick={()=>startEdit(u)}>{u.status==='pending'||u.status==='setup_required'?'Review':'Edit'}</button>}</div>
           </div>)}
           {!users.length&&<div className="users-empty">No CTE accounts yet.</div>}
         </div>
       </section>
 
-      <div className="users-note"><b>Access hierarchy</b><span>Self-registered colleagues enter as Pending Staff. Review the request, set an initial password, choose permissions, then change Status to Active. Admin accounts can manage Staff only; only Super Admin can create or modify Admin / Super Admin accounts.</span></div>
+      {setupLink&&<div className="users-message"><b>Employee activation link</b><div style={{marginTop:8,wordBreak:'break-all'}}>{setupLink}</div><button type="button" onClick={()=>navigator.clipboard?.writeText(setupLink)} style={{marginTop:8}}>Copy activation link</button></div>}
+      <div className="users-note"><b>Access hierarchy</b><span>Self-registered colleagues enter as Pending Staff. Review permissions and approve the account. CTE Online then creates a one-time activation link so the employee sets the first password privately. Admin never needs to know the employee password.</span></div>
     </div>
 
     {open&&<div className="user-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setOpen(false)}}>
@@ -111,14 +115,13 @@ export default function Users(){
           <label>Username<input disabled={Boolean(editing)} value={form.username} onChange={e=>setForm({...form,username:e.target.value})}/></label>
           <label>Email<input value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>
           <label>Phone<input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></label>
-          <label>Password<input type="password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} placeholder={editing&&form.status==='pending'?'Set initial password before activation':editing?'Leave blank to keep current password':'Minimum 8 characters'}/></label>
           <label>Department<select value={form.department} onChange={e=>setForm({...form,department:e.target.value})}>{DEPARTMENTS.map(x=><option key={x}>{x}</option>)}</select></label>
           <label>Role<select value={form.role} onChange={e=>setForm({...form,role:e.target.value})} disabled={me?.role!=='super_admin'}>
             {me?.role==='super_admin'&&<option value="super_admin">Super Admin</option>}
             {me?.role==='super_admin'&&<option value="admin">Admin</option>}
             <option value="staff">Staff</option>
           </select></label>
-          <label>Status<select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option value="pending">Pending Approval</option><option value="active">Active</option><option value="disabled">Disabled</option></select></label>
+          <label>Status<select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option value="pending">Pending Approval</option><option value="active">Approve / Active</option><option value="disabled">Disabled</option></select></label>
         </div>
 
         {form.role!=='super_admin'&&<div className="permission-box">
@@ -128,7 +131,7 @@ export default function Users(){
           </div>
         </div>}
 
-        <div className="user-modal-actions"><button type="button" onClick={()=>setOpen(false)}>Cancel</button><button className="save-user">{editing?'Save Changes':'Create User'}</button></div>
+        <div className="user-modal-actions"><button type="button" onClick={()=>setOpen(false)}>Cancel</button><button className="save-user">{editing?'Save / Approve':'Create User'}</button></div>
       </form>
     </div>}
   </main>
