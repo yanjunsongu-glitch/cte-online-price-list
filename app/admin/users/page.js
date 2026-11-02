@@ -57,6 +57,19 @@ export default function Users(){
     if(!r.ok){setMsg(j.error||'Could not save account.');return}
     setMsg(editing?'Account updated.':'Account created.');setOpen(false);await load();
   }
+  async function removeUser(u){
+    if(!confirm(`Delete ${u.fullName||u.username}? This permanently removes the account.`))return;
+    setMsg('Deleting account…');
+    const r=await fetch('/api/system/users',{
+      method:'DELETE',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({id:u.id})
+    });
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){setMsg(j.error||'Could not delete account.');return}
+    setMsg('Account deleted.');
+    await load();
+  }
   async function logout(){
     await fetch('/api/system/logout',{method:'POST'});window.location.replace('/login');
   }
@@ -94,7 +107,7 @@ export default function Users(){
             <div className="muted">{u.permissions?.includes('*')?'All modules':(u.permissions||[]).length+' permissions'}</div>
             <div><span className={'status-pill status-'+u.status}>{statusLabel(u.status)}</span></div>
             <div className="muted">{date(u.lastLoginAt)}</div>
-            <div>{canManage&&<button className="edit-user" onClick={()=>startEdit(u)}>{u.status==='pending'?'Review':'Edit'}</button>}</div>
+            <div>{canManage&&<div className="user-row-actions"><button className="edit-user" onClick={()=>startEdit(u)}>{u.status==='pending'?'Review':'Edit'}</button><button className="delete-user" onClick={()=>removeUser(u)}>Delete</button></div>}</div>
           </div>)}
           {!users.length&&<div className="users-empty">No CTE accounts yet.</div>}
         </div>
