@@ -32,7 +32,7 @@ export default function Register(){
         <div className="register-copy">
           <span>CTE STAFF ACCOUNT</span>
           <h1>Request an account</h1>
-          <p>Submit your staff details. An Admin will review your request, set your initial password, and assign the correct access.</p>
+          <p>Submit your staff details. An Admin will review your request and assign the correct access. After approval, you will receive a one-time activation link to create your password privately.</p>
         </div>
         <form onSubmit={submit}>
           <div className="register-grid">
@@ -42,7 +42,7 @@ export default function Register(){
             <label>Phone<input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></label>
             <label>Department<select value={form.department} onChange={e=>setForm({...form,department:e.target.value})}>{DEPARTMENTS.map(x=><option key={x}>{x}</option>)}</select></label>
           </div>
-          <div className="register-note"><b>Request rules</b><span>Self-registration always creates a Pending Staff request. Admin and Super Admin roles cannot be requested from this page.</span></div>
+          <div className="register-note"><b>Request rules</b><span>Self-registration always creates a Pending Staff request. Admin and Super Admin roles cannot be requested from this page. Admin does not create or see your password.</span></div>
           {msg&&<div className="register-error">{msg}</div>}
           <button disabled={busy}>{busy?'Submitting…':'Submit account request'}</button>
         </form>
@@ -50,7 +50,7 @@ export default function Register(){
       </>:<div className="register-success">
         <div>✓</div>
         <h1>Request submitted</h1>
-        <p>Your request is pending. An Admin or Super Admin will review it, set your initial password, and activate your access.</p>
+        <p>Your request is pending. After approval, an Admin or Super Admin will send you a one-time activation link so you can create your own password.</p>
         <a href="/login">Back to Sign in</a>
       </div>}
     </section>
