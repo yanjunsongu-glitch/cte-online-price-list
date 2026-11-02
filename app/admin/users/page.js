@@ -12,6 +12,7 @@ const PERMISSIONS=[
 const DEPARTMENTS=['Management','Sales','Pre-sales','After-sales','Finance','Warehouse','Other'];
 
 function roleLabel(v){return v==='super_admin'?'Super Admin':v==='admin'?'Admin':'Staff'}
+function statusLabel(v){return v==='pending'?'Pending Approval':v==='active'?'Active':'Disabled'}
 function date(v){if(!v)return 'Never';try{return new Date(v).toLocaleString()}catch{return '—'}}
 
 export default function Users(){
@@ -80,6 +81,7 @@ export default function Users(){
         <div><span>Super Admin</span><b>{users.filter(x=>x.role==='super_admin').length}</b></div>
         <div><span>Admin</span><b>{users.filter(x=>x.role==='admin').length}</b></div>
         <div><span>Staff</span><b>{users.filter(x=>x.role==='staff').length}</b></div>
+        <div><span>Pending</span><b>{users.filter(x=>x.status==='pending').length}</b></div>
       </section>
 
       <section className="users-card">
@@ -90,15 +92,15 @@ export default function Users(){
             <div><span className={'role-pill role-'+u.role}>{roleLabel(u.role)}</span></div>
             <div className="muted">{u.department||'—'}</div>
             <div className="muted">{u.permissions?.includes('*')?'All modules':(u.permissions||[]).length+' permissions'}</div>
-            <div><span className={'status-pill status-'+u.status}>{u.status==='active'?'Active':'Disabled'}</span></div>
+            <div><span className={'status-pill status-'+u.status}>{statusLabel(u.status)}</span></div>
             <div className="muted">{date(u.lastLoginAt)}</div>
-            <div>{canManage&&<button className="edit-user" onClick={()=>startEdit(u)}>Edit</button>}</div>
+            <div>{canManage&&<button className="edit-user" onClick={()=>startEdit(u)}>{u.status==='pending'?'Review':'Edit'}</button>}</div>
           </div>)}
           {!users.length&&<div className="users-empty">No CTE accounts yet.</div>}
         </div>
       </section>
 
-      <div className="users-note"><b>Access hierarchy</b><span>Super Admin → Admin → Staff. Admin accounts can manage Staff only. Only Super Admin can create or modify Admin / Super Admin accounts.</span></div>
+      <div className="users-note"><b>Access hierarchy</b><span>Self-registered colleagues enter as Pending Staff. Review the request, set an initial password, choose permissions, then change Status to Active. Admin accounts can manage Staff only; only Super Admin can create or modify Admin / Super Admin accounts.</span></div>
     </div>
 
     {open&&<div className="user-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setOpen(false)}}>
@@ -109,14 +111,14 @@ export default function Users(){
           <label>Username<input disabled={Boolean(editing)} value={form.username} onChange={e=>setForm({...form,username:e.target.value})}/></label>
           <label>Email<input value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>
           <label>Phone<input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></label>
-          <label>Password<input type="password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} placeholder={editing?'Leave blank to keep current password':'Minimum 8 characters'}/></label>
+          <label>Password<input type="password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} placeholder={editing&&form.status==='pending'?'Set initial password before activation':editing?'Leave blank to keep current password':'Minimum 8 characters'}/></label>
           <label>Department<select value={form.department} onChange={e=>setForm({...form,department:e.target.value})}>{DEPARTMENTS.map(x=><option key={x}>{x}</option>)}</select></label>
           <label>Role<select value={form.role} onChange={e=>setForm({...form,role:e.target.value})} disabled={me?.role!=='super_admin'}>
             {me?.role==='super_admin'&&<option value="super_admin">Super Admin</option>}
             {me?.role==='super_admin'&&<option value="admin">Admin</option>}
             <option value="staff">Staff</option>
           </select></label>
-          <label>Status<select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option value="active">Active</option><option value="disabled">Disabled</option></select></label>
+          <label>Status<select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option value="pending">Pending Approval</option><option value="active">Active</option><option value="disabled">Disabled</option></select></label>
         </div>
 
         {form.role!=='super_admin'&&<div className="permission-box">
