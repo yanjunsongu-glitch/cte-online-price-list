@@ -104,7 +104,7 @@ export default function Users(){
       </section>
 
       {setupLink&&<div className="users-message"><b>Employee activation link</b><div style={{marginTop:8,wordBreak:'break-all'}}>{setupLink}</div><button type="button" onClick={()=>navigator.clipboard?.writeText(setupLink)} style={{marginTop:8}}>Copy activation link</button></div>}
-      <div className="users-note"><b>Access hierarchy</b><span>Self-registered colleagues enter as Pending Staff. Review permissions and approve the account. CTE Online then creates a one-time activation link so the employee sets the first password privately. Admin never needs to know the employee password.</span></div>
+      <div className="users-note"><b>Access hierarchy</b><span>Self-registered colleagues create their own password and become Active Staff immediately with basic access. Admin can later change department, permissions, status, or role according to company needs.</span></div>
     </div>
 
     {open&&<div className="user-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setOpen(false)}}>
