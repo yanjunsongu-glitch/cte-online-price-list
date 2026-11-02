@@ -108,3 +108,38 @@ svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-l
   .section-heading{align-items:flex-start;flex-direction:column;gap:3px}
   .work-list>a{grid-template-columns:auto 1fr auto}.work-status,.work-list>a>b{grid-column:2}.work-list>a>em{grid-column:3;grid-row:1/3}
 }
+
+
+/* Dashbook readability pass */
+.side-label{font-size:10px}
+.side-nav a{font-size:12px;min-height:46px}
+.side-footer span{font-size:10px}
+.side-footer small{font-size:9px}
+.dash-search input{font-size:12px}
+.dash-search kbd{font-size:10px}
+.top-account strong{font-size:12px}
+.top-account span{font-size:10px}
+.account-pop-head strong{font-size:12px}
+.account-pop-head span{font-size:10px}
+.hero-eyebrow{font-size:10px}
+.hero p{font-size:13px}
+.hero-meta{font-size:10px}
+.kpi-copy>span{font-size:10px}
+.kpi-copy small{font-size:10px}
+.section-heading span{font-size:9px}
+.section-heading p{font-size:10px}
+.module-tile-top span{font-size:9px}
+.module-tile p{font-size:11px}
+.module-open{font-size:10px}
+.quick-head small{font-size:10px}
+.quick-list span{font-size:11px}
+.work-main strong{font-size:11px}
+.work-main span{font-size:10px}
+.work-status{font-size:9px}
+.work-empty strong{font-size:11px}
+.work-empty span{font-size:10px}
+.dash-footer{font-size:10px}
+@media(max-width:760px){
+  .side-nav a{font-size:11px}
+  .hero p{font-size:11px}
+}
