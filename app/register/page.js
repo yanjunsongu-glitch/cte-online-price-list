@@ -29,11 +29,11 @@ export default function Register(){
 
   return <main className="register-page">
     <section className="register-card">
-      <a className="register-brand" href="/login"><img src="/icon.svg" alt="CTE"/><div><b>CTE Online</b><small>Staff Account Request</small></div></a>
+      <a className="register-brand" href="/login"><img src="/icon.svg" alt="CTE"/><div><b>CTE Online</b><small>Staff Registration</small></div></a>
       {!done?<>
         <div className="register-copy">
           <span>CTE STAFF ACCOUNT</span>
-          <h1>Request an account</h1>
+          <h1>Create your account</h1>
           <p>Create your CTE staff account and set your own password. New accounts are activated immediately with standard Staff access.</p>
         </div>
         <form onSubmit={submit}>
