@@ -3423,3 +3423,49 @@ footer{
 .login-card .admin-brand-logo{margin:0 auto 10px}
 .admin-title-brand{display:flex;align-items:center;gap:12px}
 .admin-title-brand>div{display:grid;gap:1px}
+
+
+/* Shared return-to-dashboard control */
+.back-to-dashbook{
+  position:fixed;
+  right:22px;
+  bottom:22px;
+  z-index:9990;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-height:42px;
+  padding:0 15px;
+  border:1px solid rgba(11,91,167,.22);
+  border-radius:999px;
+  background:rgba(255,255,255,.96);
+  color:#0b5ba7;
+  font:800 12px/1 Inter,"Segoe UI",Arial,sans-serif;
+  text-decoration:none;
+  box-shadow:0 10px 28px rgba(18,58,96,.16);
+  backdrop-filter:blur(10px);
+  transition:.18s ease;
+}
+.back-to-dashbook:hover{
+  transform:translateY(-2px);
+  background:#0b5ba7;
+  color:#fff;
+  border-color:#0b5ba7;
+  box-shadow:0 14px 34px rgba(18,58,96,.22);
+}
+.back-to-dashbook>span:first-child{
+  font-size:18px;
+  line-height:1;
+}
+@media(max-width:760px){
+  .back-to-dashbook{
+    right:14px;
+    bottom:max(14px,env(safe-area-inset-bottom));
+    min-height:40px;
+    padding:0 13px;
+    font-size:11px;
+  }
+}
+@media print{
+  .back-to-dashbook{display:none!important}
+}

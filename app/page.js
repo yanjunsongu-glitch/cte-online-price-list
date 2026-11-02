@@ -1,4 +1,5 @@
 'use client';
+import BackToDashbook from './components/BackToDashbook';
 import {useEffect,useMemo,useRef,useState} from 'react';
 
 const CTE_LOGO="/icon.svg";
@@ -774,7 +775,7 @@ export default function Home(){
           </div>
         </div>
       )}
-    </main>
+    <BackToDashbook/></main>
     <PrintDocument/>
     <style>{`
       .display-settings-btn{display:flex!important;flex-direction:column;align-items:flex-start!important;justify-content:center!important;min-width:210px;border-radius:12px!important;background:#0b5ba7!important;color:#fff!important;border:0!important;padding:8px 14px!important}
