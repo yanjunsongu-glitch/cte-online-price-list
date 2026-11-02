@@ -42,6 +42,7 @@ export default function Login(){
         <button disabled={busy||!username||!password}>{busy?'Signing in…':'Sign in'}</button>
         {msg&&<div className="cte-login-error">{msg}</div>}
       </form>
+      <div className="cte-login-request"><span>New CTE staff?</span><a href="/register">Request an account</a></div>
       <footer><span>CTE Myanmar</span><small>Authorized staff only</small></footer>
     </section>
     <section className="cte-login-side">
