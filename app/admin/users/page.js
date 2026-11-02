@@ -100,7 +100,7 @@ export default function Users(){
         </div>
       </section>
 
-      <div className="users-note"><b>Access hierarchy</b><span>Self-registered colleagues enter as Pending Staff. Review the request, set an initial password, choose permissions, then change Status to Active. Admin accounts can manage Staff only; only Super Admin can create or modify Admin / Super Admin accounts.</span></div>
+      <div className="users-note"><b>Access hierarchy</b><span>Self-registered colleagues create their own password and become Active Staff immediately with basic access. Admin can later adjust their department, permissions or status. Admin accounts can manage Staff only; only Super Admin can create or modify Admin / Super Admin accounts.</span></div>
     </div>
 
     {open&&<div className="user-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setOpen(false)}}>

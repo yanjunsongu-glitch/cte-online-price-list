@@ -23,9 +23,9 @@ export async function POST(req){
       action:'self-register',
       objectType:'user',
       objectId:user.id,
-      after:{username:user.username,fullName:user.fullName,department:user.department,status:user.status,role:user.role}
+      after:{username:user.username,fullName:user.fullName,department:user.department,status:user.status,role:user.role,permissions:user.permissions}
     });
-    return NextResponse.json({ok:true,status:'pending'});
+    return NextResponse.json({ok:true,status:'active'});
   }catch(e){
     return NextResponse.json({ok:false,error:e?.message||'Could not submit account request.'},{status:400});
   }
