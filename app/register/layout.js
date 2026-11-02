@@ -1,0 +1,1 @@
+export const metadata={title:'Request Account — CTE'};export default function Layout({children}){return children}
