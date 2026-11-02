@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {hasPermission,validatedSystemSessionFromRequest} from '@/lib/systemAuth';
-import {createSystemUser,listSystemUsers,updateSystemUser} from '@/lib/systemUsers';
+import {createSystemUser,deleteSystemUser,listSystemUsers,updateSystemUser} from '@/lib/systemUsers';
 import {writeActivity} from '@/lib/activity';
 
 function canView(session){return hasPermission(session,'users.view')||hasPermission(session,'users.manage')}
@@ -36,5 +36,28 @@ export async function PATCH(req){
     return NextResponse.json(updated);
   }catch(e){
     return NextResponse.json({error:e?.message||'Could not update user'},{status:400});
+  }
+}
+
+
+export async function DELETE(req){
+  const session=await validatedSystemSessionFromRequest(req);
+  if(!session||!canManage(session))return NextResponse.json({error:'Forbidden'},{status:403});
+  const body=await req.json().catch(()=>null);
+  if(!body?.id)return NextResponse.json({error:'User ID required'},{status:400});
+  try{
+    const before=(await listSystemUsers()).find(x=>x.id===body.id)||null;
+    const deleted=await deleteSystemUser(body.id,session);
+    await writeActivity({
+      actor:session.username,
+      module:'users',
+      action:'delete',
+      objectType:'user',
+      objectId:deleted.id,
+      before:before?{username:before.username,role:before.role,department:before.department,status:before.status,permissions:before.permissions}:null
+    });
+    return NextResponse.json({ok:true});
+  }catch(e){
+    return NextResponse.json({error:e?.message||'Could not delete user'},{status:400});
   }
 }
