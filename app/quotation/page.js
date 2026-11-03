@@ -259,7 +259,7 @@ export default function Quotation(){
           {q.includeCover!==false && <section className="qt-page qt-cover">
             <div className="qt-date">Date - {q.quotationDate}</div>
             <div className="qt-cover-center">
-              <div className="qt-logo-mark">CTE</div>
+              <img className="qt-company-logo qt-company-logo-cover" src={CTE_BRAND_LOGO} alt="CTE"/>
               <div className="qt-myanmar">MYANMAR</div>
               <h1>{catalog?.company?.name||'CTE Myanmar Co.,Ltd'}</h1>
               <h3>Solar, Inverter & Battery</h3>
