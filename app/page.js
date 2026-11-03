@@ -155,7 +155,7 @@ export default function Home(){
   }
 
   function printPromotionItems(row,section){
-    return visibleColumns(section)
+    return sectionColumns(section)
       .filter(col=>col.type==='discount'&&row?.[col.key]!==null&&row?.[col.key]!==undefined&&String(row[col.key]).trim()!=='')
       .map(col=>({
         key:col.key,
