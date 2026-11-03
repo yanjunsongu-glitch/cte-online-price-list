@@ -3624,3 +3624,50 @@ footer{
     font-size:6pt!important;
   }
 }
+
+
+/* Promotion bars in customer print */
+@media print{
+  .pc-promotions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:1.2mm;
+    margin-top:1.5mm;
+  }
+  .pc-promo{
+    display:inline-flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:2.2mm;
+    min-height:6.5mm;
+    padding:1.2mm 2mm;
+    border-radius:1.3mm;
+    border:.5pt solid #f0cf7a;
+    background:#fff7dc!important;
+    color:#78540a!important;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .pc-promo span{
+    font-size:6pt;
+    font-weight:900;
+    letter-spacing:.25pt;
+  }
+  .pc-promo strong{
+    font-size:7.4pt;
+    color:#c22d24!important;
+    white-space:nowrap;
+  }
+  .pc-promo-packageDiscount{
+    border-color:#f1b85e;
+    background:#fff1d5!important;
+  }
+  .pc-promo-repeatDiscount{
+    border-color:#f0d380;
+    background:#fff9e8!important;
+  }
+  .pc-promo-specialDiscount{
+    border-color:#e8a0a4;
+    background:#fff0f1!important;
+  }
+}
