@@ -143,3 +143,39 @@ svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-l
   .side-nav a{font-size:11px}
   .hero p{font-size:11px}
 }
+
+
+/* Dashboard readability pass v2 */
+.side-label{font-size:12px!important;letter-spacing:.9px}
+.side-nav a{font-size:14px!important;min-height:50px!important}
+.top-account strong{font-size:14px!important}
+.top-account span{font-size:11px!important}
+.hero-eyebrow{font-size:12px!important;letter-spacing:1.2px!important}
+.hero h1{font-size:38px!important}
+.hero p{font-size:15px!important;line-height:1.55!important}
+.hero-meta{font-size:12px!important}
+.kpi-copy>span{font-size:12px!important}
+.kpi-copy strong{font-size:24px!important}
+.kpi-copy small{font-size:11px!important}
+.section-heading span{font-size:11px!important}
+.section-heading h2{font-size:24px!important}
+.section-heading p{font-size:12px!important}
+.module-tile h3{font-size:24px!important}
+.module-tile p{font-size:13px!important}
+.module-open{font-size:12px!important}
+.quick-head h3{font-size:20px!important}
+.quick-head small{font-size:12px!important}
+.quick-list span{font-size:13px!important}
+.work-main strong{font-size:13px!important}
+.work-main span{font-size:11px!important}
+.work-status{font-size:10px!important}
+.dash-footer{font-size:11px!important}
+@media(max-width:760px){
+  .side-nav a{font-size:12px!important}
+  .hero h1{font-size:28px!important}
+  .hero p{font-size:13px!important}
+  .hero-meta{font-size:11px!important}
+  .kpi-copy>span{font-size:11px!important}
+  .kpi-copy strong{font-size:21px!important}
+  .kpi-copy small{font-size:10px!important}
+}
