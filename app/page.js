@@ -154,6 +154,16 @@ export default function Home(){
     return col.type==='price'?dualPrice(v,print):<span className={print?'discount-value discount-value-print':'discount-value'}>{v||''}</span>;
   }
 
+  function printPromotionItems(row,section){
+    return visibleColumns(section)
+      .filter(col=>col.type==='discount'&&row?.[col.key]!==null&&row?.[col.key]!==undefined&&String(row[col.key]).trim()!=='')
+      .map(col=>({
+        key:col.key,
+        value:String(row[col.key]).trim(),
+        label:col.key==='packageDiscount'?'PACKAGE DEAL':col.key==='repeatDiscount'?'REPEAT CUSTOMER':col.key==='specialDiscount'?'SPECIAL OFFER':col.label
+      }));
+  }
+
   function updateTodayRate(v){
     setTodayRate(v);
     if(typeof window!=='undefined') window.localStorage.setItem('cteTodayCnyMmkRate',v);
@@ -430,7 +440,7 @@ export default function Home(){
 
       {printSections.map((section,si)=>{
         const startNo=printSections.slice(0,si).reduce((n,x)=>n+x.rows.length,0);
-        const cols=visibleColumns(section);
+        const cols=visibleColumns(section).filter(col=>col.type!=='discount');
         return <section className="pc-section" key={section.name}>
           <div className="pc-section-title">
             <span>{String(si+1).padStart(2,'0')}</span>
@@ -447,11 +457,17 @@ export default function Home(){
                 <div className="pc-product-main">
                   <h3>{r.spec}</h3>
                   <div className="pc-values">
-                    {cols.map(col=><div className={col.type==='price'?'pc-value pc-value-price':'pc-value pc-value-discount'} key={col.key}>
+                    {cols.map(col=><div className="pc-value pc-value-price" key={col.key}>
                       <span>{col.label}</span>
                       <strong>{renderValue(r,col,true)}</strong>
                     </div>)}
                   </div>
+                  {printPromotionItems(r,section).length>0 && <div className="pc-promotions">
+                    {printPromotionItems(r,section).map(p=><div className={'pc-promo pc-promo-'+p.key} key={p.key}>
+                      <span>{p.label}</span>
+                      <strong>{p.value.replace(/%$/,'')}% OFF</strong>
+                    </div>)}
+                  </div>}
                 </div>
               </div>
               {r.remarks && <div className="pc-remarks"><b>Remarks</b><span>{r.remarks}</span></div>}
