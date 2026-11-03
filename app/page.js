@@ -198,7 +198,7 @@ export default function Home(){
     const r=Number(todayRate);
     const mmk=Number.isFinite(r)&&r>0?Math.round(n*r):null;
     return <span className={print?'dual-price dual-price-print':'dual-price'}>
-      {(currencyDisplay==='cny'||currencyDisplay==='both') && <b className="price-cny">{n.toLocaleString('en-US')}</b>}
+      {(currencyDisplay==='cny'||currencyDisplay==='both') && <b className="price-cny">{n.toLocaleString('en-US')}{currencyDisplay==='cny'&&<small className="price-cny-suffix"> RMB</small>}</b>}
       {(currencyDisplay==='mmk'||currencyDisplay==='both') && mmk!==null && <em className="price-mmk">{mmk.toLocaleString('en-US')} <small>MMK</small></em>}
     </span>
   }
