@@ -3469,3 +3469,158 @@ footer{
 @media print{
   .back-to-dashbook{display:none!important}
 }
+
+
+/* Price list print polish: compact premium customer layout */
+.price-cny-suffix{
+  font-size:.68em;
+  font-weight:800;
+  letter-spacing:.02em;
+  white-space:nowrap;
+}
+@media print{
+  .print-cards-document{
+    max-width:194mm!important;
+    margin:0 auto!important;
+  }
+
+  .pc-header{
+    gap:6mm!important;
+    padding-bottom:3.2mm!important;
+    margin-bottom:2.5mm!important;
+  }
+  .pc-brand{
+    max-width:60%!important;
+    gap:3.2mm!important;
+  }
+  .pc-brand img{
+    width:20mm!important;
+    height:20mm!important;
+  }
+  .pc-brand h1{
+    font-size:13pt!important;
+    letter-spacing:-.15pt;
+  }
+  .pc-brand p{
+    font-size:7pt!important;
+    color:#5d6f82!important;
+  }
+  .pc-head-right{
+    max-width:38%!important;
+  }
+  .pc-kicker{
+    font-size:6.2pt!important;
+    letter-spacing:1.2pt!important;
+  }
+  .pc-head-right h2{
+    font-size:15.5pt!important;
+    letter-spacing:-.25pt;
+  }
+  .pc-validity,.pc-rate{
+    font-size:6.8pt!important;
+  }
+  .pc-note{
+    margin-bottom:3mm!important;
+    padding:2.2mm 3mm!important;
+    border-style:solid!important;
+    border-width:.6pt!important;
+    border-color:#b8d0e8!important;
+    background:#f4f8fc!important;
+    color:#365f88!important;
+    font-size:7pt!important;
+  }
+
+  .pc-section{
+    margin-bottom:3.2mm!important;
+  }
+  .pc-section-title{
+    min-height:8.5mm!important;
+    margin-bottom:1.8mm!important;
+    padding:0 2.8mm!important;
+    border-left-width:2.5mm!important;
+    background:#eaf2fb!important;
+  }
+  .pc-section-title strong{
+    font-size:10.8pt!important;
+    letter-spacing:-.1pt;
+  }
+
+  .pc-product-list{
+    gap:2mm!important;
+  }
+  .pc-product-card{
+    border-color:#b9cbe0!important;
+    border-radius:1.6mm!important;
+  }
+  .pc-product-top{
+    grid-template-columns:8mm 34mm minmax(0,1fr)!important;
+    min-height:31mm!important;
+  }
+  .pc-product-no{
+    font-size:8.6pt!important;
+    background:#edf4fb!important;
+  }
+  .pc-product-image{
+    padding:1.7mm!important;
+    background:#fff!important;
+  }
+  .pc-product-image img{
+    max-width:30mm!important;
+    max-height:27mm!important;
+  }
+  .pc-product-main{
+    padding:2.2mm 2.6mm!important;
+  }
+  .pc-product-main h3{
+    margin-bottom:1.6mm!important;
+    font-size:9.7pt!important;
+    color:#0d3f70!important;
+  }
+
+  .pc-values{
+    grid-template-columns:repeat(auto-fit,minmax(31mm,1fr))!important;
+    gap:1.3mm!important;
+  }
+  .pc-value{
+    min-height:11.5mm!important;
+    padding:1.4mm 1.7mm!important;
+    border-color:#c8d9ea!important;
+    background:#f7faff!important;
+  }
+  .pc-value>span{
+    margin-bottom:.7mm!important;
+    font-size:6.2pt!important;
+    color:#607388!important;
+  }
+  .pc-value>strong{
+    font-size:8.2pt!important;
+    color:#0c3764!important;
+  }
+  .dual-price-print .price-cny{
+    font-size:8.4pt!important;
+    color:#0c3764!important;
+  }
+  .dual-price-print .price-cny-suffix{
+    font-size:5.8pt!important;
+    color:#58708a!important;
+    font-weight:800!important;
+  }
+  .dual-price-print .price-mmk{
+    font-size:6.4pt!important;
+  }
+
+  .pc-remarks{
+    padding:1.6mm 2.6mm 1.8mm!important;
+    gap:1.8mm!important;
+    font-size:6.5pt!important;
+    background:#fbfdff!important;
+  }
+  .pc-remarks b{
+    min-width:12mm;
+  }
+
+  .pc-footer{
+    margin-top:3mm!important;
+    font-size:6pt!important;
+  }
+}
