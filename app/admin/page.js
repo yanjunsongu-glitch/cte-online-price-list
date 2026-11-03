@@ -204,7 +204,7 @@ export default function Admin(){
           <div className="share-admin-main">
             <strong>{x.customerName||'Unnamed customer'}</strong>
             <span>{x.productCount} product(s) · {x.columnCount} column(s) · {x.currencyDisplay==='both'?'CNY + MMK':String(x.currencyDisplay||'cny').toUpperCase()}</span>
-            <small>Created {new Date(x.createdAt).toLocaleString()} {x.expiresAt?'· Expires '+new Date(x.expiresAt).toLocaleString():'· No expiry'}</small>
+            <small>Created by <b>{x.createdBy||'Unknown'}</b> · {new Date(x.createdAt).toLocaleString()} {x.expiresAt?'· Expires '+new Date(x.expiresAt).toLocaleString():'· No expiry'}</small>
           </div>
           <div className="share-admin-status">
             <b className={'share-status-'+x.status}>{x.status}</b>
