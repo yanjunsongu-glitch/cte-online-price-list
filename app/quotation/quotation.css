@@ -110,3 +110,21 @@
   .qt-table th:nth-child(7){width:14%!important}
   .qt-table th:nth-child(8){width:21%!important}
 }
+
+
+/* Quotation cover logo fix */
+.qt-cover-center .qt-company-logo-cover{
+  display:block!important;
+  width:150px!important;
+  height:110px!important;
+  max-width:none!important;
+  object-fit:contain!important;
+  margin:0 auto 16px!important;
+}
+@media print{
+  .qt-cover-center .qt-company-logo-cover{
+    width:34mm!important;
+    height:25mm!important;
+    margin-bottom:6mm!important;
+  }
+}
