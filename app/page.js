@@ -476,6 +476,12 @@ export default function Home(){
         </section>
       })}
 
+      <div className="pc-brand-footer">
+        <div><b>PV + Energy Storage</b><span>Solution</span></div>
+        <div><b>Industrial & Commercial</b><span>Applications</span></div>
+        <div><b>Reliable Quality</b><span>Long Warranty</span></div>
+        <div><b>Local Support</b><span>in Myanmar</span></div>
+      </div>
       <div className="pc-footer">
         <span>{data.company?.name}</span>
         <span>Official Customer Price List</span>
