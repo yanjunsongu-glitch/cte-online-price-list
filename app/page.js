@@ -20,6 +20,7 @@ export default function Home(){
   const [selectMode,setSelectMode]=useState(false);
   const [selected,setSelected]=useState({});
   const [printMode,setPrintMode]=useState(null);
+  const [printSnapshot,setPrintSnapshot]=useState(null);
   const [selectedColumnKeys,setSelectedColumnKeys]=useState(['retail','installer','wholesale','packageDiscount','repeatDiscount','specialDiscount']);
   const [currencyDisplay,setCurrencyDisplay]=useState('both');
   const [todayRate,setTodayRate]=useState('');
@@ -66,7 +67,7 @@ export default function Home(){
   },[data]);
 
   useEffect(()=>{
-    const done=()=>setPrintMode(null);
+    const done=()=>{setPrintMode(null);setPrintSnapshot(null)};
     window.addEventListener('afterprint',done);
     return ()=>window.removeEventListener('afterprint',done);
   },[]);
@@ -205,16 +206,17 @@ export default function Home(){
   }
 
   const printSections=useMemo(()=>{
-    if(!data) return [];
+    if(!data||!printSnapshot) return [];
+    const selectedIds=new Set(printSnapshot.productIds||[]);
     return data.sections.map(s=>({
       ...s,
       rows:s.rows.filter(r=>
         r.visible!==false &&
         r.archived!==true &&
-        (printMode==='all' || (printMode==='selected' && selected[r.id]))
+        selectedIds.has(r.id)
       )
     })).filter(s=>s.rows.length);
-  },[data,printMode,selected]);
+  },[data,printSnapshot]);
 
   function open(r){
     const items=[
@@ -387,15 +389,37 @@ export default function Home(){
   }
 
   function beginPrint(mode){
-    if(mode==='selected'){
-      const count=Object.values(selected).filter(Boolean).length;
-      if(!count){
-        alert('Please select at least one product to print.');
-        return;
-      }
+    const availableIds=(data?.sections||[])
+      .flatMap(s=>(s.rows||[]))
+      .filter(r=>r.visible!==false&&r.archived!==true)
+      .map(r=>r.id);
+
+    const productIds=mode==='selected'
+      ? availableIds.filter(id=>Boolean(selected[id]))
+      : availableIds;
+
+    if(mode==='selected'&&!productIds.length){
+      alert('Please select at least one visible product to print.');
+      return;
     }
+    if(!selectedColumnKeys.length){
+      alert('Please select at least one price or discount column in Display Settings.');
+      return;
+    }
+
+    setPrintSnapshot({
+      productIds,
+      columnKeys:[...selectedColumnKeys],
+      currencyDisplay,
+      rate:todayRate
+    });
     setPrintMode(mode);
-    setTimeout(()=>window.print(),120);
+
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        setTimeout(()=>window.print(),80);
+      });
+    });
   }
 
   function renderPreviewCell(r){
@@ -411,9 +435,25 @@ export default function Home(){
     );
   }
 
+  function renderPrintValue(row,col){
+    const v=row?.[col.key];
+    if(col.type!=='price')return <span className="discount-value discount-value-print">{v||''}</span>;
+    if(v===null||v===undefined||v==='') return '';
+    if(v==='/'||String(v).includes('%')) return <span>{v}</span>;
+    const n=Number(v);
+    if(!Number.isFinite(n)) return <span>{v}</span>;
+    const display=printSnapshot?.currencyDisplay||currencyDisplay;
+    const r=Number(printSnapshot?.rate||todayRate);
+    const mmk=Number.isFinite(r)&&r>0?Math.round(n*r):null;
+    return <span className="dual-price dual-price-print">
+      {(display==='cny'||display==='both') && <b className="price-cny">{n.toLocaleString('en-US')}{display==='cny'&&<small className="price-cny-suffix"> RMB</small>}</b>}
+      {(display==='mmk'||display==='both') && mmk!==null && <em className="price-mmk">{mmk.toLocaleString('en-US')} <small>MMK</small></em>}
+    </span>;
+  }
+
   function PrintDocument(){
     if(!printMode) return null;
-    return <div className="print-document print-cards-document">
+    return <div className="print-document print-cards-document" data-print-version="snapshot-v1">
       <div className="pc-header">
         <div className="pc-brand">
           <img src={logoSrc} onError={e=>{e.currentTarget.src=CTE_LOGO}} alt="CTE logo"/>
@@ -435,7 +475,8 @@ export default function Home(){
 
       {printSections.map((section,si)=>{
         const startNo=printSections.slice(0,si).reduce((n,x)=>n+x.rows.length,0);
-        const printCols=visibleColumns(section);
+        const printKeys=new Set(printSnapshot?.columnKeys||[]);
+        const printCols=sectionColumns(section).filter(col=>printKeys.has(col.key));
         const cols=printCols.filter(col=>col.type!=='discount');
         const discountCols=printCols.filter(col=>col.type==='discount');
         return <section className="pc-section" key={section.name}>
@@ -456,7 +497,7 @@ export default function Home(){
                   <div className="pc-values">
                     {cols.map(col=><div className="pc-value pc-value-price" key={col.key}>
                       <span>{col.label}</span>
-                      <strong>{renderValue(r,col,true)}</strong>
+                      <strong>{renderPrintValue(r,col)}</strong>
                     </div>)}
                   </div>
                   {discountCols.some(col=>r?.[col.key]!==null&&r?.[col.key]!==undefined&&String(r[col.key]).trim()!=='') && <div className="pc-promotions">
