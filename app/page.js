@@ -154,16 +154,6 @@ export default function Home(){
     return col.type==='price'?dualPrice(v,print):<span className={print?'discount-value discount-value-print':'discount-value'}>{v||''}</span>;
   }
 
-  function printPromotionItems(row,section){
-    return sectionColumns(section)
-      .filter(col=>selectedColumnKeys.includes(col.key))
-      .filter(col=>col.type==='discount'&&row?.[col.key]!==null&&row?.[col.key]!==undefined&&String(row[col.key]).trim()!=='')
-      .map(col=>({
-        key:col.key,
-        value:String(row[col.key]).trim(),
-        label:col.key==='packageDiscount'?'PACKAGE DEAL':col.key==='repeatDiscount'?'REPEAT CUSTOMER':col.key==='specialDiscount'?'SPECIAL OFFER':col.label
-      }));
-  }
 
   function updateTodayRate(v){
     setTodayRate(v);
@@ -445,7 +435,9 @@ export default function Home(){
 
       {printSections.map((section,si)=>{
         const startNo=printSections.slice(0,si).reduce((n,x)=>n+x.rows.length,0);
-        const cols=visibleColumns(section).filter(col=>col.type!=='discount');
+        const printCols=visibleColumns(section);
+        const cols=printCols.filter(col=>col.type!=='discount');
+        const discountCols=printCols.filter(col=>col.type==='discount');
         return <section className="pc-section" key={section.name}>
           <div className="pc-section-title">
             <span>{String(si+1).padStart(2,'0')}</span>
@@ -467,11 +459,17 @@ export default function Home(){
                       <strong>{renderValue(r,col,true)}</strong>
                     </div>)}
                   </div>
-                  {printPromotionItems(r,section).length>0 && <div className="pc-promotions">
-                    {printPromotionItems(r,section).map(p=><div className={'pc-promo pc-promo-'+p.key} key={p.key}>
-                      <span>{p.label}</span>
-                      <strong>{p.value.replace(/%$/,'')}% OFF</strong>
-                    </div>)}
+                  {discountCols.some(col=>r?.[col.key]!==null&&r?.[col.key]!==undefined&&String(r[col.key]).trim()!=='') && <div className="pc-promotions">
+                    {discountCols
+                      .filter(col=>r?.[col.key]!==null&&r?.[col.key]!==undefined&&String(r[col.key]).trim()!=='')
+                      .map(col=>{
+                        const value=String(r[col.key]).trim();
+                        const label=col.key==='packageDiscount'?'PACKAGE DEAL':col.key==='repeatDiscount'?'REPEAT CUSTOMER':col.key==='specialDiscount'?'SPECIAL OFFER':col.label;
+                        return <div className={'pc-promo pc-promo-'+col.key} key={col.key}>
+                          <span>{label}</span>
+                          <strong>{value.replace(/%$/,'')}% OFF</strong>
+                        </div>
+                      })}
                   </div>}
                 </div>
               </div>
