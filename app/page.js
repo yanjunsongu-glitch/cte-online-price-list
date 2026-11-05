@@ -156,6 +156,7 @@ export default function Home(){
 
   function printPromotionItems(row,section){
     return sectionColumns(section)
+      .filter(col=>selectedColumnKeys.includes(col.key))
       .filter(col=>col.type==='discount'&&row?.[col.key]!==null&&row?.[col.key]!==undefined&&String(row[col.key]).trim()!=='')
       .map(col=>({
         key:col.key,
@@ -217,7 +218,11 @@ export default function Home(){
     if(!data) return [];
     return data.sections.map(s=>({
       ...s,
-      rows:s.rows.filter(r=>r.visible!==false && (printMode==='all' || (printMode==='selected' && selected[r.id])))
+      rows:s.rows.filter(r=>
+        r.visible!==false &&
+        r.archived!==true &&
+        (printMode==='all' || (printMode==='selected' && selected[r.id]))
+      )
     })).filter(s=>s.rows.length);
   },[data,printMode,selected]);
 
