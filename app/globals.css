@@ -3902,3 +3902,48 @@ footer{
     display:none!important;
   }
 }
+
+
+/* Repeat category heading on every printed page when a category spans pages */
+@media print{
+  .pc-section{
+    break-inside:auto!important;
+    page-break-inside:auto!important;
+  }
+  .pc-section-table{
+    width:100%;
+    border-collapse:separate!important;
+    border-spacing:0 1.8mm!important;
+    table-layout:fixed!important;
+  }
+  .pc-section-table>thead{
+    display:table-header-group!important;
+  }
+  .pc-section-table>thead>tr,
+  .pc-section-table>thead>tr>th{
+    break-inside:avoid!important;
+    page-break-inside:avoid!important;
+  }
+  .pc-section-table>thead>tr>th{
+    padding:0!important;
+    border:0!important;
+    background:transparent!important;
+    text-align:left!important;
+  }
+  .pc-section-table>tbody>tr{
+    break-inside:avoid!important;
+    page-break-inside:avoid!important;
+  }
+  .pc-section-table>tbody>tr>td{
+    padding:0!important;
+    border:0!important;
+    background:transparent!important;
+  }
+  .pc-section-table .pc-section-title{
+    margin:0 0 1.8mm!important;
+  }
+  .pc-section-table .pc-product-card{
+    break-inside:avoid!important;
+    page-break-inside:avoid!important;
+  }
+}
