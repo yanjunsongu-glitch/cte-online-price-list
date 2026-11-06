@@ -453,94 +453,126 @@ export default function Home(){
 
   function PrintDocument(){
     if(!printMode) return null;
-    return <div className="print-document print-cards-document" data-print-version="snapshot-v1">
-      <div className="pc-header">
-        <div className="pc-brand">
-          <img src={logoSrc} onError={e=>{e.currentTarget.src=CTE_LOGO}} alt="CTE logo"/>
-          <div>
+
+    const discountKeys=new Set(
+      (printSnapshot?.columnKeys||[]).filter(key=>['packageDiscount','repeatDiscount','specialDiscount'].includes(key))
+    );
+
+    function policyText(key,label){
+      if(!discountKeys.has(key))return null;
+      const values=[...new Set(
+        printSections.flatMap(section=>section.rows||[])
+          .map(row=>String(row?.[key]||'').trim())
+          .filter(Boolean)
+          .map(v=>v.replace(/%$/,''))
+      )];
+      if(!values.length)return null;
+      const nums=values.map(Number).filter(Number.isFinite).sort((a,b)=>a-b);
+      const value=nums.length===values.length
+        ? (nums.length===1?nums[0]+'% OFF':nums[0]+'% – '+nums[nums.length-1]+'% OFF')
+        : values.join(' / ');
+      return {key,label,value};
+    }
+
+    const policies=[
+      policyText('repeatDiscount','Repeat Customer'),
+      policyText('specialDiscount','School / Hospital / Nursing Home / Temple'),
+      policyText('packageDiscount','Package Discount')
+    ].filter(Boolean);
+
+    const heroImage=
+      printSections.flatMap(section=>section.rows||[])
+        .find(row=>/CIS|cabinet|storage/i.test(String(row.spec||''))&&row.image)?.image
+      || printSections.flatMap(section=>section.rows||[]).find(row=>row.image)?.image
+      || '';
+
+    return <div className="print-document print-template-e" data-print-version="template-e-v1">
+      <header className="pte-hero">
+        <div className="pte-brand">
+          <img className="pte-logo" src={logoSrc} onError={e=>{e.currentTarget.src=CTE_LOGO}} alt="CTE logo"/>
+          <div className="pte-company">
             <h1>{data.company?.name||'CTE MYANMAR CO.,LTD'}</h1>
             <p>{data.company?.address}</p>
             <p>{data.company?.tel}</p>
           </div>
         </div>
-        <div className="pc-head-right">
-          <div className="pc-kicker">CUSTOMER PRICE LIST</div>
+
+        <div className="pte-title-area">
+          <div className="pte-kicker">CUSTOMER PRICE LIST</div>
           <h2>{displayTitle}</h2>
-          <div className="pc-validity">{displayValidity}</div>
-          {todayRate && <div className="pc-rate">Today&apos;s {rate1Label}: <b>{todayRate}</b></div>}
+          <div className="pte-meta">
+            <span>▣ {displayValidity}</span>
+            {todayRate&&<span>● {rate1Label}: <b>{todayRate}</b></span>}
+          </div>
         </div>
-      </div>
 
-      <div className="pc-note">{displayNote}</div>
+        {heroImage&&<div className="pte-hero-visual"><img src={heroImage} alt=""/></div>}
+      </header>
 
-      {printSections.map((section,si)=>{
-        const startNo=printSections.slice(0,si).reduce((n,x)=>n+x.rows.length,0);
-        const printKeys=new Set(printSnapshot?.columnKeys||[]);
-        const printCols=sectionColumns(section).filter(col=>printKeys.has(col.key));
-        const cols=printCols.filter(col=>col.type!=='discount');
-        const discountCols=printCols.filter(col=>col.type==='discount');
-        return <section className="pc-section" key={section.name}>
-          <table className="pc-section-table" role="presentation">
-            <thead>
-              <tr>
-                <th>
-                  <div className="pc-section-title">
-                    <span>{String(si+1).padStart(2,'0')}</span>
-                    <strong>{section.name}</strong>
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {section.rows.map((r,ri)=><tr className="pc-product-row" key={r.id}>
-                <td>
-                  <article className="pc-product-card">
-                    <div className="pc-product-top">
-                      <div className="pc-product-no">{startNo+ri+1}</div>
-                      <div className="pc-product-image">
-                        {r.image?<img src={r.image} alt=""/>:<div className="pc-no-image">No image</div>}
-                      </div>
-                      <div className="pc-product-main">
-                        <h3>{r.spec}</h3>
-                        <div className="pc-values">
-                          {cols.map(col=><div className="pc-value pc-value-price" key={col.key}>
-                            <span>{col.label}</span>
-                            <strong>{renderPrintValue(r,col)}</strong>
-                          </div>)}
-                        </div>
-                        {discountCols.some(col=>r?.[col.key]!==null&&r?.[col.key]!==undefined&&String(r[col.key]).trim()!=='') && <div className="pc-promotions">
-                          {discountCols
-                            .filter(col=>r?.[col.key]!==null&&r?.[col.key]!==undefined&&String(r[col.key]).trim()!=='')
-                            .map(col=>{
-                              const value=String(r[col.key]).trim();
-                              const label=col.key==='packageDiscount'?'PACKAGE DEAL':col.key==='repeatDiscount'?'REPEAT CUSTOMER':col.key==='specialDiscount'?'SPECIAL OFFER':col.label;
-                              return <div className={'pc-promo pc-promo-'+col.key} key={col.key}>
-                                <span>{label}</span>
-                                <strong>{value.replace(/%$/,'')}% OFF</strong>
-                              </div>
-                            })}
-                        </div>}
-                      </div>
+      {policies.length>0&&<section className="pte-policy">
+        <div className="pte-policy-label"><span>%</span><b>Discount Policy</b></div>
+        <div className="pte-policy-items">
+          {policies.map(p=><div key={p.key}><span>{p.label}:</span><b>{p.value}</b>{p.key==='packageDiscount'&&<small> selected packages only</small>}</div>)}
+        </div>
+      </section>}
+
+      {displayNote&&<div className="pte-note">{displayNote}</div>}
+
+      <div className="pte-sections">
+        {printSections.map((section,si)=>{
+          const startNo=printSections.slice(0,si).reduce((n,x)=>n+x.rows.length,0);
+          const printKeys=new Set(printSnapshot?.columnKeys||[]);
+          const cols=sectionColumns(section).filter(col=>printKeys.has(col.key)&&col.type!=='discount');
+
+          return <section className="pc-section pte-section" key={section.name}>
+            <table className="pc-section-table pte-section-table" role="presentation">
+              <thead>
+                <tr>
+                  <th>
+                    <div className="pc-section-title pte-section-title">
+                      <span>{String(si+1).padStart(2,'0')}</span>
+                      <strong>{section.name}</strong>
                     </div>
-                    {r.remarks && <div className="pc-remarks"><b>Remarks</b><span>{r.remarks}</span></div>}
-                  </article>
-                </td>
-              </tr>)}
-            </tbody>
-          </table>
-        </section>
-      })}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {section.rows.map((r,ri)=><tr className="pc-product-row pte-product-row" key={r.id}>
+                  <td>
+                    <article className="pte-product-card">
+                      <div className="pte-product-no">{startNo+ri+1}</div>
+                      <div className="pte-product-image">
+                        {r.image?<img src={r.image} alt=""/>:<div className="pte-no-image">No image</div>}
+                      </div>
+                      <div className="pte-product-info">
+                        <h3>{r.spec}</h3>
+                        {r.remarks&&<p>{r.remarks}</p>}
+                      </div>
+                      <div className="pte-prices" style={{'--price-cols':Math.max(cols.length,1)}}>
+                        {cols.map((col,ci)=><div className={'pte-price '+(ci===1?'pte-price-featured':'')} key={col.key}>
+                          <span>{col.label}</span>
+                          <strong>{renderPrintValue(r,col)}</strong>
+                        </div>)}
+                        {!cols.length&&<div className="pte-price pte-price-empty">No price columns selected</div>}
+                      </div>
+                    </article>
+                  </td>
+                </tr>)}
+              </tbody>
+            </table>
+          </section>
+        })}
+      </div>
 
-      <div className="pc-brand-footer">
-        <div><b>PV + Energy Storage</b><span>Solution</span></div>
-        <div><b>Industrial & Commercial</b><span>Applications</span></div>
-        <div><b>Reliable Quality</b><span>Long Warranty</span></div>
-        <div><b>Local Support</b><span>in Myanmar</span></div>
-      </div>
-      <div className="pc-footer">
-        <span>{data.company?.name}</span>
-        <span>Official Customer Price List</span>
-      </div>
+      <footer className="pte-footer">
+        <div className="pte-footer-wave"></div>
+        <div className="pte-benefits">
+          <div><i>✓</i><span><b>Reliable Products</b><small>Long Lifespan</small></span></div>
+          <div><i>◎</i><span><b>Professional Support</b><small>Local Service</small></span></div>
+          <div><i>◉</i><span><b>Integrated Solution</b><small>PV + Storage + EMS</small></span></div>
+          <div><i>◆</i><span><b>Trusted Partner</b><small>for Myanmar</small></span></div>
+        </div>
+      </footer>
     </div>
   }
 
