@@ -480,43 +480,54 @@ export default function Home(){
         const cols=printCols.filter(col=>col.type!=='discount');
         const discountCols=printCols.filter(col=>col.type==='discount');
         return <section className="pc-section" key={section.name}>
-          <div className="pc-section-title">
-            <span>{String(si+1).padStart(2,'0')}</span>
-            <strong>{section.name}</strong>
-          </div>
-
-          <div className="pc-product-list">
-            {section.rows.map((r,ri)=><article className="pc-product-card" key={r.id}>
-              <div className="pc-product-top">
-                <div className="pc-product-no">{startNo+ri+1}</div>
-                <div className="pc-product-image">
-                  {r.image?<img src={r.image} alt=""/>:<div className="pc-no-image">No image</div>}
-                </div>
-                <div className="pc-product-main">
-                  <h3>{r.spec}</h3>
-                  <div className="pc-values">
-                    {cols.map(col=><div className="pc-value pc-value-price" key={col.key}>
-                      <span>{col.label}</span>
-                      <strong>{renderPrintValue(r,col)}</strong>
-                    </div>)}
+          <table className="pc-section-table" role="presentation">
+            <thead>
+              <tr>
+                <th>
+                  <div className="pc-section-title">
+                    <span>{String(si+1).padStart(2,'0')}</span>
+                    <strong>{section.name}</strong>
                   </div>
-                  {discountCols.some(col=>r?.[col.key]!==null&&r?.[col.key]!==undefined&&String(r[col.key]).trim()!=='') && <div className="pc-promotions">
-                    {discountCols
-                      .filter(col=>r?.[col.key]!==null&&r?.[col.key]!==undefined&&String(r[col.key]).trim()!=='')
-                      .map(col=>{
-                        const value=String(r[col.key]).trim();
-                        const label=col.key==='packageDiscount'?'PACKAGE DEAL':col.key==='repeatDiscount'?'REPEAT CUSTOMER':col.key==='specialDiscount'?'SPECIAL OFFER':col.label;
-                        return <div className={'pc-promo pc-promo-'+col.key} key={col.key}>
-                          <span>{label}</span>
-                          <strong>{value.replace(/%$/,'')}% OFF</strong>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {section.rows.map((r,ri)=><tr className="pc-product-row" key={r.id}>
+                <td>
+                  <article className="pc-product-card">
+                    <div className="pc-product-top">
+                      <div className="pc-product-no">{startNo+ri+1}</div>
+                      <div className="pc-product-image">
+                        {r.image?<img src={r.image} alt=""/>:<div className="pc-no-image">No image</div>}
+                      </div>
+                      <div className="pc-product-main">
+                        <h3>{r.spec}</h3>
+                        <div className="pc-values">
+                          {cols.map(col=><div className="pc-value pc-value-price" key={col.key}>
+                            <span>{col.label}</span>
+                            <strong>{renderPrintValue(r,col)}</strong>
+                          </div>)}
                         </div>
-                      })}
-                  </div>}
-                </div>
-              </div>
-              {r.remarks && <div className="pc-remarks"><b>Remarks</b><span>{r.remarks}</span></div>}
-            </article>)}
-          </div>
+                        {discountCols.some(col=>r?.[col.key]!==null&&r?.[col.key]!==undefined&&String(r[col.key]).trim()!=='') && <div className="pc-promotions">
+                          {discountCols
+                            .filter(col=>r?.[col.key]!==null&&r?.[col.key]!==undefined&&String(r[col.key]).trim()!=='')
+                            .map(col=>{
+                              const value=String(r[col.key]).trim();
+                              const label=col.key==='packageDiscount'?'PACKAGE DEAL':col.key==='repeatDiscount'?'REPEAT CUSTOMER':col.key==='specialDiscount'?'SPECIAL OFFER':col.label;
+                              return <div className={'pc-promo pc-promo-'+col.key} key={col.key}>
+                                <span>{label}</span>
+                                <strong>{value.replace(/%$/,'')}% OFF</strong>
+                              </div>
+                            })}
+                        </div>}
+                      </div>
+                    </div>
+                    {r.remarks && <div className="pc-remarks"><b>Remarks</b><span>{r.remarks}</span></div>}
+                  </article>
+                </td>
+              </tr>)}
+            </tbody>
+          </table>
         </section>
       })}
 
