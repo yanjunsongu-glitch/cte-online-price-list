@@ -15,7 +15,9 @@ export async function PUT(req){
   if(!hasPermission(session,'price.publish'))return NextResponse.json({error:'Forbidden'},{status:403});
   const before=await getCatalog();
   const input=await req.json();
-  const saved=await saveCatalog(input,session.username);
+  let saved;
+  try{saved=await saveCatalog(input,session.username)}
+  catch(e){return NextResponse.json({error:'Cloud Price List storage unavailable. Current built-in Price List remains readable.',storageUnavailable:true},{status:503})}
   await writeActivity({
     actor:session.username,module:'price-list',action:'publish',objectType:'catalog',objectId:'current',
     before:{title:before.title,validity:before.validity,rate:before.rate,updatedAt:before.updatedAt},
