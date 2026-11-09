@@ -2,6 +2,38 @@
 import {useEffect,useState} from 'react';
 import {upload as blobUpload} from '@vercel/blob/client';
 const cp=x=>JSON.parse(JSON.stringify(x));
+const LOCAL_CATALOG_KEY='cteEmergencyCatalogV1';
+
+function readLocalCatalog(){
+  if(typeof window==='undefined')return null;
+  try{return JSON.parse(localStorage.getItem(LOCAL_CATALOG_KEY)||'null')}catch{return null}
+}
+function writeLocalCatalog(v){
+  if(typeof window==='undefined')return;
+  localStorage.setItem(LOCAL_CATALOG_KEY,JSON.stringify(v));
+}
+function fileToDataUrl(file,maxSide=1600,quality=.86){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(reader.error||new Error('File read failed'));
+    reader.onload=()=>{
+      if(!(file.type||'').startsWith('image/')){resolve(reader.result);return}
+      const img=new Image();
+      img.onerror=()=>resolve(reader.result);
+      img.onload=()=>{
+        const scale=Math.min(1,maxSide/Math.max(img.naturalWidth||1,img.naturalHeight||1));
+        const w=Math.max(1,Math.round(img.naturalWidth*scale));
+        const h=Math.max(1,Math.round(img.naturalHeight*scale));
+        const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(img,0,0,w,h);
+        try{resolve(canvas.toDataURL('image/jpeg',quality))}catch{resolve(reader.result)}
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function Admin(){
   const [d,setD]=useState(null);
@@ -16,9 +48,12 @@ export default function Admin(){
     }
     if(r.ok){
       const j=await r.json();
-      j.labels=j.labels||{};
-      j.company=j.company||{};
-      setD(j);
+      const local=readLocalCatalog();
+      const source=local||j;
+      source.labels=source.labels||{};
+      source.company=source.company||{};
+      setD(source);
+      if(local)setMsg('Emergency local mode: edits and uploaded photos on this computer are loaded locally.');
       loadShares();
     }
   }
@@ -118,7 +153,24 @@ export default function Admin(){
       return result;
     }catch(e){
       console.error(e);
-      setMsg('Upload failed: '+(e?.message||file.name));
+      if(kind==='image'){
+        try{
+          const url=await fileToDataUrl(file);
+          setD(x=>{
+            const n=cp(x),z=n.sections[si].rows[ri];
+            z.image=url;
+            writeLocalCatalog(n);
+            return n;
+          });
+          setMsg('Cloud upload is unavailable. Photo saved locally on this computer. Click Save & Publish to keep the rest of your edits locally.');
+          return {url,name:file.name,type:'image',localOnly:true};
+        }catch(localError){
+          console.error(localError);
+        }
+      }
+      setMsg(kind==='datasheet'
+        ? 'Datasheet upload is unavailable while Vercel Blob is paused.'
+        : 'Upload failed: '+(e?.message||file.name));
       return null;
     }
   }
@@ -155,13 +207,34 @@ export default function Admin(){
       setMsg('Logo uploaded. Click Save & Publish.');
     }catch(e){
       console.error(e);
-      setMsg('Logo upload failed: '+(e?.message||'Unknown error'));
+      try{
+        const url=await fileToDataUrl(file,1200,.9);
+        setD(x=>{
+          const n={...x,company:{...(x.company||{}),logo:url}};
+          writeLocalCatalog(n);
+          return n;
+        });
+        setMsg('Cloud upload is unavailable. Logo saved locally on this computer.');
+      }catch{
+        setMsg('Logo upload failed: '+(e?.message||'Unknown error'));
+      }
     }
   }
   async function save(){
     setMsg('Saving…');
     const r=await fetch('/api/admin/catalog',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(d)});
-    setMsg(r.ok?'Published successfully.':'Save failed');
+    if(r.ok){
+      if(typeof window!=='undefined')localStorage.removeItem(LOCAL_CATALOG_KEY);
+      setMsg('Published successfully.');
+      return;
+    }
+    const j=await r.json().catch(()=>({}));
+    if(j.storageUnavailable||r.status===503){
+      writeLocalCatalog(d);
+      setMsg('Vercel Blob is paused. Changes are saved locally on this computer and will appear in Customer View on this browser.');
+      return;
+    }
+    setMsg('Save failed: '+(j.error||r.status));
   }
 
   if(!d)return <main className="admin-shell"><a className="system-back-link" href="/system">← CTE Online System</a><div className="login-card"><img className="admin-brand-logo" src="/icon.svg" alt="CTE"/><h1>Loading Price List Admin…</h1><p>Checking your CTE Account permissions.</p></div></main>;
