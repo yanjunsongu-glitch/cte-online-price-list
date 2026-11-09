@@ -10,12 +10,16 @@ export async function GET(req){
   if(!session)return NextResponse.json({error:'Unauthorized'},{status:401});
   if(unified(session)&&!hasPermission(session,'finance.view'))return NextResponse.json({error:'Forbidden'},{status:403});
   const id=new URL(req.url).searchParams.get('id');
-  if(id){
-    const invoice=await getInvoice(id);
-    if(!invoice)return NextResponse.json({error:'Not found'},{status:404});
-    return NextResponse.json(invoice);
+  try{
+    if(id){
+      const invoice=await getInvoice(id);
+      if(!invoice)return NextResponse.json({error:'Not found'},{status:404});
+      return NextResponse.json(invoice);
+    }
+    return NextResponse.json({items:await listInvoices(100),user:session.username});
+  }catch(e){
+    return NextResponse.json({error:'Cloud invoice storage unavailable',storageUnavailable:true},{status:503});
   }
-  return NextResponse.json({items:await listInvoices(100),user:session.username});
 }
 export async function POST(req){
   const session=await financeSessionFromRequest(req);
@@ -23,8 +27,13 @@ export async function POST(req){
   if(unified(session)&&!(hasPermission(session,'finance.create')||hasPermission(session,'finance.edit')))return NextResponse.json({error:'Forbidden'},{status:403});
   const body=await req.json().catch(()=>null);
   if(!body)return NextResponse.json({error:'Invalid invoice'},{status:400});
-  const before=body.id?await getInvoice(body.id):null;
-  const saved=await saveInvoice(body,session.username);
+  let before=null,saved;
+  try{
+    before=body.id?await getInvoice(body.id):null;
+    saved=await saveInvoice(body,session.username);
+  }catch(e){
+    return NextResponse.json({error:'Cloud invoice storage unavailable',storageUnavailable:true},{status:503});
+  }
   await writeActivity({
     actor:session.username,module:'finance',action:before?'update':'create',objectType:'invoice',objectId:saved.id,
     before:before?{invoiceNo:before.invoiceNo,paymentStatus:before.paymentStatus,customerName:before.customerName,currency:before.currency}:null,
