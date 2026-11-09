@@ -4,6 +4,46 @@ import {useEffect,useMemo,useRef,useState} from 'react';
 
 const CTE_LOGO="/icon.svg";
 
+const LOCAL_IMAGE_DB='cteEmergencyImagesV1';
+const LOCAL_IMAGE_STORE='images';
+const LOCAL_IMAGE_PREFIX='local-image:';
+
+function openLocalImageDb(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(LOCAL_IMAGE_DB,1);
+    req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(LOCAL_IMAGE_STORE))req.result.createObjectStore(LOCAL_IMAGE_STORE)};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error||new Error('IndexedDB unavailable'));
+  });
+}
+async function getLocalImageUrl(productId){
+  if(typeof window==='undefined')return '';
+  const db=await openLocalImageDb();
+  const blob=await new Promise((resolve,reject)=>{
+    const tx=db.transaction(LOCAL_IMAGE_STORE,'readonly');
+    const req=tx.objectStore(LOCAL_IMAGE_STORE).get(productId);
+    req.onsuccess=()=>resolve(req.result||null);
+    req.onerror=()=>reject(req.error||new Error('Local image read failed'));
+  });
+  db.close();
+  return blob?URL.createObjectURL(blob):'';
+}
+async function hydrateEmergencyImages(catalog){
+  const n=JSON.parse(JSON.stringify(catalog));
+  for(const s of n?.sections||[]){
+    for(const r of s.rows||[]){
+      const image=String(r.image||'');
+      if(image.startsWith(LOCAL_IMAGE_PREFIX)){
+        try{
+          const url=await getLocalImageUrl(image.slice(LOCAL_IMAGE_PREFIX.length));
+          if(url)r.image=url;
+        }catch{}
+      }
+    }
+  }
+  return n;
+}
+
 function money(v){
   if(v===null||v===undefined||v==='') return '';
   if(v==='/'||String(v).includes('%')) return v;
@@ -41,7 +81,7 @@ export default function Home(){
   const dragRef=useRef(null);
 
   useEffect(()=>{
-    fetch('/api/catalog',{cache:'no-store'}).then(r=>{if(r.status===401){window.location.replace('/login?next=/');throw new Error('Unauthorized')}if(!r.ok)throw new Error('Catalog unavailable');return r.json()}).then(j=>{
+    fetch('/api/catalog',{cache:'no-store'}).then(r=>{if(r.status===401){window.location.replace('/login?next=/');throw new Error('Unauthorized')}if(!r.ok)throw new Error('Catalog unavailable');return r.json()}).then(async j=>{
       let source=j;
       if(typeof window!=='undefined'){
         try{
@@ -49,6 +89,7 @@ export default function Home(){
           if(local&&Array.isArray(local.sections))source=local;
         }catch{}
       }
+      source=await hydrateEmergencyImages(source);
       setData(source);
       const saved=typeof window!=='undefined'?window.localStorage.getItem('cteTodayCnyMmkRate'):'';
       setTodayRate(saved||String(source.rate||''));
