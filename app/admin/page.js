@@ -3,36 +3,72 @@ import {useEffect,useState} from 'react';
 import {upload as blobUpload} from '@vercel/blob/client';
 const cp=x=>JSON.parse(JSON.stringify(x));
 const LOCAL_CATALOG_KEY='cteEmergencyCatalogV1';
+const LOCAL_IMAGE_DB='cteEmergencyImagesV1';
+const LOCAL_IMAGE_STORE='images';
+const LOCAL_IMAGE_PREFIX='local-image:';
 
 function readLocalCatalog(){
   if(typeof window==='undefined')return null;
   try{return JSON.parse(localStorage.getItem(LOCAL_CATALOG_KEY)||'null')}catch{return null}
 }
+function catalogForLocalStorage(v){
+  const n=cp(v);
+  for(const s of n?.sections||[]){
+    for(const r of s.rows||[]){
+      if(String(r.image||'').startsWith('blob:'))r.image=LOCAL_IMAGE_PREFIX+r.id;
+    }
+  }
+  return n;
+}
 function writeLocalCatalog(v){
   if(typeof window==='undefined')return;
-  localStorage.setItem(LOCAL_CATALOG_KEY,JSON.stringify(v));
+  localStorage.setItem(LOCAL_CATALOG_KEY,JSON.stringify(catalogForLocalStorage(v)));
 }
-function fileToDataUrl(file,maxSide=1600,quality=.86){
+function openLocalImageDb(){
   return new Promise((resolve,reject)=>{
-    const reader=new FileReader();
-    reader.onerror=()=>reject(reader.error||new Error('File read failed'));
-    reader.onload=()=>{
-      if(!(file.type||'').startsWith('image/')){resolve(reader.result);return}
-      const img=new Image();
-      img.onerror=()=>resolve(reader.result);
-      img.onload=()=>{
-        const scale=Math.min(1,maxSide/Math.max(img.naturalWidth||1,img.naturalHeight||1));
-        const w=Math.max(1,Math.round(img.naturalWidth*scale));
-        const h=Math.max(1,Math.round(img.naturalHeight*scale));
-        const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
-        const ctx=canvas.getContext('2d');
-        ctx.drawImage(img,0,0,w,h);
-        try{resolve(canvas.toDataURL('image/jpeg',quality))}catch{resolve(reader.result)}
-      };
-      img.src=reader.result;
-    };
-    reader.readAsDataURL(file);
+    const req=indexedDB.open(LOCAL_IMAGE_DB,1);
+    req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(LOCAL_IMAGE_STORE))req.result.createObjectStore(LOCAL_IMAGE_STORE)};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error||new Error('IndexedDB unavailable'));
   });
+}
+async function putLocalImage(productId,file){
+  const db=await openLocalImageDb();
+  await new Promise((resolve,reject)=>{
+    const tx=db.transaction(LOCAL_IMAGE_STORE,'readwrite');
+    tx.objectStore(LOCAL_IMAGE_STORE).put(file,productId);
+    tx.oncomplete=resolve;
+    tx.onerror=()=>reject(tx.error||new Error('Local image save failed'));
+    tx.onabort=()=>reject(tx.error||new Error('Local image save aborted'));
+  });
+  db.close();
+  return URL.createObjectURL(file);
+}
+async function getLocalImageUrl(productId){
+  const db=await openLocalImageDb();
+  const blob=await new Promise((resolve,reject)=>{
+    const tx=db.transaction(LOCAL_IMAGE_STORE,'readonly');
+    const req=tx.objectStore(LOCAL_IMAGE_STORE).get(productId);
+    req.onsuccess=()=>resolve(req.result||null);
+    req.onerror=()=>reject(req.error||new Error('Local image read failed'));
+  });
+  db.close();
+  return blob?URL.createObjectURL(blob):'';
+}
+async function hydrateLocalCatalog(v){
+  const n=cp(v);
+  for(const s of n?.sections||[]){
+    for(const r of s.rows||[]){
+      const image=String(r.image||'');
+      if(image.startsWith(LOCAL_IMAGE_PREFIX)){
+        try{
+          const url=await getLocalImageUrl(image.slice(LOCAL_IMAGE_PREFIX.length));
+          if(url)r.image=url;
+        }catch{}
+      }
+    }
+  }
+  return n;
 }
 
 export default function Admin(){
@@ -49,7 +85,8 @@ export default function Admin(){
     if(r.ok){
       const j=await r.json();
       const local=readLocalCatalog();
-      const source=local||j;
+      let source=local||j;
+      source=await hydrateLocalCatalog(source);
       source.labels=source.labels||{};
       source.company=source.company||{};
       setD(source);
@@ -155,17 +192,19 @@ export default function Admin(){
       console.error(e);
       if(kind==='image'){
         try{
-          const url=await fileToDataUrl(file);
+          const url=await putLocalImage(productId,file);
           setD(x=>{
             const n=cp(x),z=n.sections[si].rows[ri];
             z.image=url;
             writeLocalCatalog(n);
             return n;
           });
-          setMsg('Cloud upload is unavailable. Photo saved locally on this computer. Click Save & Publish to keep the rest of your edits locally.');
+          setMsg('Vercel Blob is paused. Photo saved locally on this computer using emergency storage.');
           return {url,name:file.name,type:'image',localOnly:true};
         }catch(localError){
-          console.error(localError);
+          console.error('Emergency local image save failed',localError);
+          setMsg('Cloud storage is suspended and local emergency image storage failed. Try JPG/PNG under 10MB in Chrome.');
+          return null;
         }
       }
       setMsg(kind==='datasheet'
