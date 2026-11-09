@@ -1,49 +1,78 @@
 import {NextResponse} from 'next/server';
-import {handleUpload} from '@vercel/blob/client';
 import {hasPermission,validatedSystemSessionFromRequest} from '@/lib/systemAuth';
+import {isSupabaseConfigured,uploadSharedAsset} from '@/lib/supabaseStorage';
+
+export const runtime='nodejs';
 
 function safeName(v){
   return String(v||'file').replace(/[^a-zA-Z0-9._-]/g,'_');
 }
 
+function extFor(fileName,mime){
+  const m=String(fileName||'').match(/(\.[a-zA-Z0-9]{1,8})$/);
+  if(m)return m[1].toLowerCase();
+  if(mime==='image/webp')return '.webp';
+  if(mime==='image/png')return '.png';
+  if(mime==='image/jpeg')return '.jpg';
+  if(mime==='application/pdf')return '.pdf';
+  return '';
+}
+
 export async function POST(request){
-  const body=await request.json();
+  const session=await validatedSystemSessionFromRequest(request);
+  if(!(session&&hasPermission(session,'price.edit'))){
+    return NextResponse.json({error:'Unauthorized'},{status:401});
+  }
+  if(!isSupabaseConfigured()){
+    return NextResponse.json({
+      error:'Supabase shared storage is not configured yet.',
+      storageUnavailable:true,
+      backend:'supabase'
+    },{status:503});
+  }
 
   try{
-    const jsonResponse=await handleUpload({
-      body,
-      request,
-      onBeforeGenerateToken:async(pathname,clientPayload)=>{
-        const unified=await validatedSystemSessionFromRequest(request);
-        if(!(unified&&hasPermission(unified,'price.edit'))) throw new Error('Unauthorized');
+    const form=await request.formData();
+    const file=form.get('file');
+    const kind=String(form.get('kind')||'asset');
+    const productId=safeName(form.get('productId')||'file');
+    const originalName=safeName(form.get('fileName')||file?.name||'file');
 
-        let meta={};
-        try{meta=clientPayload?JSON.parse(clientPayload):{}}catch{}
+    if(!file||typeof file.arrayBuffer!=='function'){
+      return NextResponse.json({error:'No file received.'},{status:400});
+    }
+    if(file.size>6*1024*1024){
+      return NextResponse.json({error:'Shared upload is limited to 6MB per file. Images are compressed automatically before upload.'},{status:413});
+    }
 
-        const kind=String(meta.kind||'asset');
-        const productId=safeName(meta.productId||'file');
-        const fileName=safeName(meta.fileName||pathname.split('/').pop()||'file');
+    const isPdf=file.type==='application/pdf'||/\.pdf$/i.test(originalName);
+    const isImage=String(file.type||'').startsWith('image/');
+    if(kind==='datasheet'&&!isPdf&&!isImage){
+      return NextResponse.json({error:'Datasheet must be a PDF or image.'},{status:400});
+    }
+    if((kind==='image'||kind==='logo')&&!isImage){
+      return NextResponse.json({error:'Photo/logo must be an image.'},{status:400});
+    }
 
-        const isDatasheet=kind==='datasheet';
-        const isImageKind=kind==='image'||kind==='logo';
+    const ext=extFor(originalName,file.type);
+    const objectName=kind+'-'+Date.now()+'-'+safeName(originalName.replace(/\.[^.]+$/,'')||'file')+ext;
+    const path='assets/'+productId+'/'+objectName;
+    const body=Buffer.from(await file.arrayBuffer());
+    const url=await uploadSharedAsset({path,body,contentType:file.type||'application/octet-stream'});
 
-        return {
-          pathname:'assets/'+productId+'/'+kind+'-'+Date.now()+'-'+fileName,
-          allowedContentTypes:isDatasheet
-            ? ['application/pdf','image/*']
-            : isImageKind
-              ? ['image/*']
-              : ['application/pdf','image/*'],
-          maximumSizeInBytes:15*1024*1024,
-          tokenPayload:JSON.stringify({productId,kind,fileName})
-        };
-      },
-      onUploadCompleted:async()=>{}
+    return NextResponse.json({
+      url,
+      name:originalName,
+      type:isPdf?'pdf':isImage?'image':'file',
+      shared:true,
+      backend:'supabase'
     });
-
-    return NextResponse.json(jsonResponse);
   }catch(error){
-    console.error('Blob client upload error',error);
-    return NextResponse.json({error:error?.message||'Upload failed'},{status:400});
+    console.error('Supabase shared upload error',error);
+    return NextResponse.json({
+      error:error?.message||'Shared upload failed',
+      storageUnavailable:true,
+      backend:'supabase'
+    },{status:503});
   }
 }

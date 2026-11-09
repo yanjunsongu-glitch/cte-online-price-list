@@ -1,6 +1,5 @@
 'use client';
 import {useEffect,useState} from 'react';
-import {upload as blobUpload} from '@vercel/blob/client';
 const cp=x=>JSON.parse(JSON.stringify(x));
 const LOCAL_CATALOG_KEY='cteEmergencyCatalogV1';
 const LOCAL_IMAGE_DB='cteEmergencyImagesV1';
@@ -70,6 +69,46 @@ async function hydrateLocalCatalog(v){
   }
   return n;
 }
+
+async function prepareSharedImage(file){
+  if(!(file?.type||'').startsWith('image/'))return file;
+  return new Promise(resolve=>{
+    const src=URL.createObjectURL(file);
+    const img=new Image();
+    img.onerror=()=>{URL.revokeObjectURL(src);resolve(file)};
+    img.onload=()=>{
+      const maxSide=2200;
+      const scale=Math.min(1,maxSide/Math.max(img.naturalWidth||1,img.naturalHeight||1));
+      const w=Math.max(1,Math.round(img.naturalWidth*scale));
+      const h=Math.max(1,Math.round(img.naturalHeight*scale));
+      const canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,w,h);
+      canvas.toBlob(blob=>{
+        URL.revokeObjectURL(src);
+        if(!blob){resolve(file);return}
+        const base=String(file.name||'image').replace(/\.[^.]+$/,'');
+        resolve(new File([blob],base+'.webp',{type:'image/webp',lastModified:Date.now()}));
+      },'image/webp',.9);
+    };
+    img.src=src;
+  });
+}
+
+async function sharedUploadRequest(file,{productId,kind}){
+  const prepared=kind==='image'||kind==='logo'?await prepareSharedImage(file):file;
+  const fd=new FormData();
+  fd.append('file',prepared,prepared.name||file.name);
+  fd.append('productId',productId||'file');
+  fd.append('kind',kind||'asset');
+  fd.append('fileName',prepared.name||file.name);
+  const r=await fetch('/api/admin/upload',{method:'POST',body:fd});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.error||'Shared upload failed');
+  return j;
+}
+
 
 export default function Admin(){
   const [d,setD]=useState(null);
@@ -164,29 +203,17 @@ export default function Admin(){
 
     const row=d.sections[si]?.rows[ri];
     const productId=row?.id||'file';
-    setMsg('Uploading '+file.name+'…');
+    setMsg('Uploading '+file.name+' to shared storage…');
 
     try{
-      const blob=await blobUpload(file.name,file,{
-        access:'public',
-        handleUploadUrl:'/api/admin/upload',
-        clientPayload:JSON.stringify({
-          productId,
-          kind,
-          fileName:file.name
-        })
-      });
-      const result={
-        url:blob.url,
-        name:file.name,
-        type:isPdf?'pdf':isImage?'image':'file'
-      };
+      const result=await sharedUploadRequest(file,{productId,kind});
       setD(x=>{
         const n=cp(x),z=n.sections[si].rows[ri];
         if(kind==='image')z.image=result.url;
         else z.datasheets=[...(z.datasheets||[]),result];
         return n;
       });
+      setMsg('Uploaded to Supabase shared storage. Click Save & Publish.');
       return result;
     }catch(e){
       console.error(e);
@@ -199,17 +226,13 @@ export default function Admin(){
             writeLocalCatalog(n);
             return n;
           });
-          setMsg('Vercel Blob is paused. Photo saved locally on this computer using emergency storage.');
+          setMsg('Supabase is not configured yet. Photo saved only on this computer as emergency fallback.');
           return {url,name:file.name,type:'image',localOnly:true};
         }catch(localError){
           console.error('Emergency local image save failed',localError);
-          setMsg('Cloud storage is suspended and local emergency image storage failed. Try JPG/PNG under 10MB in Chrome.');
-          return null;
         }
       }
-      setMsg(kind==='datasheet'
-        ? 'Datasheet upload is unavailable while Vercel Blob is paused.'
-        : 'Upload failed: '+(e?.message||file.name));
+      setMsg('Upload failed: '+(e?.message||file.name));
       return null;
     }
   }
@@ -231,32 +254,14 @@ export default function Admin(){
     if(!file)return;
     if(file.size>15*1024*1024){setMsg('Logo is larger than 15MB.');return}
     if(!(file.type||'').startsWith('image/')){setMsg('Logo must be an image.');return}
-    setMsg('Uploading company logo…');
+    setMsg('Uploading company logo to shared storage…');
     try{
-      const blob=await blobUpload(file.name,file,{
-        access:'public',
-        handleUploadUrl:'/api/admin/upload',
-        clientPayload:JSON.stringify({
-          productId:'company',
-          kind:'logo',
-          fileName:file.name
-        })
-      });
-      setD(x=>({...x,company:{...(x.company||{}),logo:blob.url}}));
-      setMsg('Logo uploaded. Click Save & Publish.');
+      const result=await sharedUploadRequest(file,{productId:'company',kind:'logo'});
+      setD(x=>({...x,company:{...(x.company||{}),logo:result.url}}));
+      setMsg('Logo uploaded to Supabase. Click Save & Publish.');
     }catch(e){
       console.error(e);
-      try{
-        const url=await fileToDataUrl(file,1200,.9);
-        setD(x=>{
-          const n={...x,company:{...(x.company||{}),logo:url}};
-          writeLocalCatalog(n);
-          return n;
-        });
-        setMsg('Cloud upload is unavailable. Logo saved locally on this computer.');
-      }catch{
-        setMsg('Logo upload failed: '+(e?.message||'Unknown error'));
-      }
+      setMsg('Logo upload failed: '+(e?.message||'Unknown error'));
     }
   }
   async function save(){
@@ -356,7 +361,7 @@ export default function Admin(){
           <label>Replace photo<input type="file" accept="image/*" onChange={e=>upload(si,ri,'image',e.target.files?.[0])}/></label>
           <label>Upload Datasheet (PDF / Image)
             <input type="file" multiple accept="application/pdf,image/*,.pdf" onChange={e=>uploadDatasheets(si,ri,e.target.files)}/>
-            <span className="upload-help">Multiple files allowed · Max 15MB per file</span>
+            <span className="upload-help">Shared via Supabase · Images compressed automatically · PDF up to 6MB</span>
           </label>
           {(r.datasheets||[]).map((x,di)=><div className="file" key={x.url}><a href={x.url} target="_blank" rel="noreferrer">{x.type==='pdf'?'PDF · ':x.type==='image'?'Image · ':''}{x.name}</a><button onClick={()=>{const n=cp(d);n.sections[si].rows[ri].datasheets.splice(di,1);setD(n)}}>Remove</button></div>)}
         </div>
