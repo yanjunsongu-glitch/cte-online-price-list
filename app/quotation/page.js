@@ -35,6 +35,24 @@ function warrantyFor(name,remarks){
   return '';
 }
 
+
+const LOCAL_Q_KEY='cte-local-quotations-v1';
+function localQRead(){
+  if(typeof window==='undefined')return [];
+  try{return JSON.parse(localStorage.getItem(LOCAL_Q_KEY)||'[]')}catch{return []}
+}
+function localQWrite(items){
+  if(typeof window==='undefined')return;
+  localStorage.setItem(LOCAL_Q_KEY,JSON.stringify(items.slice(0,100)));
+}
+function localQSummary(x){
+  return {
+    id:x.id,quotationNo:x.quotationNo,quotationDate:x.quotationDate,customerCompany:x.customerCompany,
+    contactPerson:x.contactPerson,systemName:x.systemName,currency:x.currency,subtotal:x.subtotal,status:x.status,
+    createdBy:x.createdBy||'local',updatedAt:x.updatedAt||new Date().toISOString(),localOnly:true
+  };
+}
+
 export default function Quotation(){
   const [logged,setLogged]=useState(null);
   const [catalog,setCatalog]=useState(null);
@@ -55,8 +73,15 @@ export default function Quotation(){
     if(a.status===401){window.location.replace('/login?next=/quotation');return}
     if(a.ok){
       const j=await a.json();
-      setHistory(j.items||[]);
+      const cloud=j.items||[];
+      const local=localQRead().map(localQSummary);
+      const seen=new Set(cloud.map(x=>x.id));
+      setHistory([...local.filter(x=>!seen.has(x.id)),...cloud]);
       setLogged(true);
+    }else if(a.status!==401){
+      setHistory(localQRead().map(localQSummary));
+      setLogged(true);
+      setMsg('Cloud quotation storage is temporarily unavailable. Local emergency mode is active on this computer.');
     }
     if(b.ok){
       const c=await b.json();
@@ -140,12 +165,29 @@ export default function Quotation(){
     if(!q.contactPerson&&!q.customerCompany){setMsg('Customer / Contact Person is required.');return}
     setMsg('Saving quotation…');
     const r=await fetch('/api/quotation/records',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(q)});
-    if(!r.ok){setMsg('Save failed');return}
+    if(!r.ok){
+      const now=new Date().toISOString();
+      const local={...q,id:q.id||crypto.randomUUID(),updatedAt:now,createdAt:q.createdAt||now,createdBy:q.createdBy||'local'};
+      const rows=(local.items||[]).map(x=>{
+        const qty=Number(x.qty||0),price=Number(x.unitPrice||0),disc=Number(x.discountPct||0);
+        const gross=qty*price; return {...x,total:gross-(gross*disc/100)};
+      });
+      local.subtotal=rows.reduce((s,x)=>s+Number(x.total||0),0);
+      if(!local.quotationNo)local.quotationNo='CTE-LOCAL-'+today().replaceAll('-','')+'-'+local.id.slice(0,6).toUpperCase();
+      const items=localQRead().filter(x=>x.id!==local.id);
+      localQWrite([local,...items]);
+      setQ(local);setMsg('Saved locally on this computer. Cloud storage is temporarily unavailable.');
+      setHistory(localQRead().map(localQSummary));
+      return;
+    }
     const j=await r.json();
-    setQ(j);setMsg('Quotation saved.');
+    setQ(j);setMsg('Quotation saved to cloud.');
+    const items=localQRead().filter(x=>x.id!==j.id);localQWrite(items);
     await load();
   }
   async function openRecord(id){
+    const local=localQRead().find(x=>x.id===id);
+    if(local){setQ(local);setTab('edit');setMsg('Local quotation loaded.');return}
     const r=await fetch('/api/quotation/records?id='+encodeURIComponent(id),{cache:'no-store'});
     if(r.ok){setQ(await r.json());setTab('edit');setMsg('Quotation loaded.')}
   }
