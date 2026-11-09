@@ -27,6 +27,24 @@ function fmt(v){
   return Number.isFinite(n)?n.toLocaleString('en-US',{maximumFractionDigits:2}):v;
 }
 
+
+const LOCAL_INV_KEY='cte-local-invoices-v1';
+function localInvRead(){
+  if(typeof window==='undefined')return [];
+  try{return JSON.parse(localStorage.getItem(LOCAL_INV_KEY)||'[]')}catch{return []}
+}
+function localInvWrite(items){
+  if(typeof window==='undefined')return;
+  localStorage.setItem(LOCAL_INV_KEY,JSON.stringify(items.slice(0,100)));
+}
+function localInvSummary(x){
+  return {
+    id:x.id,invoiceNo:x.invoiceNo,invoiceDate:x.invoiceDate,customerName:x.customerName,
+    currency:x.currency,grandTotal:x.grandTotal,paymentStatus:x.paymentStatus,
+    createdBy:x.createdBy||'local',createdAt:x.createdAt||new Date().toISOString(),localOnly:true
+  };
+}
+
 export default function Finance(){
   const [logged,setLogged]=useState(null);
   const [catalog,setCatalog]=useState(null);
@@ -46,8 +64,15 @@ export default function Finance(){
     if(a.status===401){window.location.replace('/login?next=/finance');return}
     if(a.ok){
       const j=await a.json();
-      setHistory(j.items||[]);
+      const cloud=j.items||[];
+      const local=localInvRead().map(localInvSummary);
+      const seen=new Set(cloud.map(x=>x.id));
+      setHistory([...local.filter(x=>!seen.has(x.id)),...cloud]);
       setLogged(true);
+    }else if(a.status!==401){
+      setHistory(localInvRead().map(localInvSummary));
+      setLogged(true);
+      setMsg('Cloud invoice storage is temporarily unavailable. Local emergency mode is active on this computer.');
     }
     if(b.ok){
       const c=await b.json();
@@ -124,14 +149,35 @@ export default function Finance(){
     if(!inv.customerName){setMsg('Customer name is required.');return}
     setMsg('Saving invoice…');
     const r=await fetch('/api/finance/invoices',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(inv)});
-    if(!r.ok){setMsg('Save failed');return}
+    if(!r.ok){
+      const now=new Date().toISOString();
+      const local={...inv,id:inv.id||crypto.randomUUID(),updatedAt:now,createdAt:inv.createdAt||now,createdBy:inv.createdBy||'local'};
+      const rows=(local.items||[]).map(x=>{
+        const qty=Number(x.qty||0),price=Number(x.unitPrice||0),disc=Number(x.discountPct||0);
+        const gross=qty*price;
+        const total=gross-(gross*disc/100);
+        return {...x,gross,total};
+      });
+      const subtotal=rows.reduce((s,x)=>s+Number(x.total||0),0);
+      const tax=subtotal*Number(local.taxPct||0)/100;
+      local.subtotal=subtotal;local.taxAmount=tax;local.grandTotal=subtotal+tax;
+      if(!local.invoiceNo)local.invoiceNo='CTE-LOCAL-INV-'+local.invoiceDate.replaceAll('-','')+'-'+local.id.slice(0,6).toUpperCase();
+      const items=localInvRead().filter(x=>x.id!==local.id);
+      localInvWrite([local,...items]);
+      setInv(local);setMsg('Saved locally on this computer. Cloud storage is temporarily unavailable.');
+      setHistory(localInvRead().map(localInvSummary));
+      return;
+    }
     const j=await r.json();
     setInv(j);
-    setMsg('Invoice saved.');
+    setMsg('Invoice saved to cloud.');
+    const items=localInvRead().filter(x=>x.id!==j.id);localInvWrite(items);
     await load();
   }
 
   async function openInvoice(id){
+    const local=localInvRead().find(x=>x.id===id);
+    if(local){setInv(local);setMsg('Local invoice loaded.');return}
     const r=await fetch('/api/finance/invoices?id='+encodeURIComponent(id),{cache:'no-store'});
     if(r.ok){setInv(await r.json());setMsg('Invoice loaded.')}
   }
