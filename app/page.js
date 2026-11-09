@@ -42,9 +42,16 @@ export default function Home(){
 
   useEffect(()=>{
     fetch('/api/catalog',{cache:'no-store'}).then(r=>{if(r.status===401){window.location.replace('/login?next=/');throw new Error('Unauthorized')}if(!r.ok)throw new Error('Catalog unavailable');return r.json()}).then(j=>{
-      setData(j);
+      let source=j;
+      if(typeof window!=='undefined'){
+        try{
+          const local=JSON.parse(window.localStorage.getItem('cteEmergencyCatalogV1')||'null');
+          if(local&&Array.isArray(local.sections))source=local;
+        }catch{}
+      }
+      setData(source);
       const saved=typeof window!=='undefined'?window.localStorage.getItem('cteTodayCnyMmkRate'):'';
-      setTodayRate(saved||String(j.rate||''));
+      setTodayRate(saved||String(source.rate||''));
       if(typeof window!=='undefined'){
         try{
           const h=JSON.parse(window.localStorage.getItem('cteStaffHeaderOverrides')||'{}');
