@@ -122,14 +122,12 @@ export default function Admin(){
       return;
     }
     if(r.ok){
-      const j=await r.json();
-      const local=readLocalCatalog();
-      let source=local||j;
-      source=await hydrateLocalCatalog(source);
+      const source=await r.json();
       source.labels=source.labels||{};
       source.company=source.company||{};
       setD(source);
-      if(local)setMsg('Emergency local mode: edits and uploaded photos on this computer are loaded locally.');
+      if(typeof window!=='undefined')localStorage.removeItem(LOCAL_CATALOG_KEY);
+      setMsg('');
       loadShares();
     }
   }
@@ -213,7 +211,7 @@ export default function Admin(){
         else z.datasheets=[...(z.datasheets||[]),result];
         return n;
       });
-      setMsg('Uploaded to Supabase shared storage. Click Save & Publish.');
+      setMsg(result.backend==='neon-fallback'?'Uploaded to shared Neon fallback. Everyone can view it. Click Save & Publish.':'Uploaded to Vercel Blob. Everyone can view it. Click Save & Publish.');
       return result;
     }catch(e){
       console.error(e);
@@ -226,7 +224,7 @@ export default function Admin(){
             writeLocalCatalog(n);
             return n;
           });
-          setMsg('Supabase is not configured yet. Photo saved only on this computer as emergency fallback.');
+          setMsg('Shared cloud upload failed. Photo saved only on this computer as last-resort fallback.');
           return {url,name:file.name,type:'image',localOnly:true};
         }catch(localError){
           console.error('Emergency local image save failed',localError);
@@ -258,7 +256,7 @@ export default function Admin(){
     try{
       const result=await sharedUploadRequest(file,{productId:'company',kind:'logo'});
       setD(x=>({...x,company:{...(x.company||{}),logo:result.url}}));
-      setMsg('Logo uploaded to Supabase. Click Save & Publish.');
+      setMsg(result.backend==='neon-fallback'?'Logo uploaded to shared Neon fallback. Click Save & Publish.':'Logo uploaded to Vercel Blob. Click Save & Publish.');
     }catch(e){
       console.error(e);
       setMsg('Logo upload failed: '+(e?.message||'Unknown error'));
@@ -275,7 +273,7 @@ export default function Admin(){
     const j=await r.json().catch(()=>({}));
     if(j.storageUnavailable||r.status===503){
       writeLocalCatalog(d);
-      setMsg('Vercel Blob is paused. Changes are saved locally on this computer and will appear in Customer View on this browser.');
+      setMsg('Shared database save is temporarily unavailable. Changes were saved locally on this computer only.');
       return;
     }
     setMsg('Save failed: '+(j.error||r.status));
@@ -361,7 +359,7 @@ export default function Admin(){
           <label>Replace photo<input type="file" accept="image/*" onChange={e=>upload(si,ri,'image',e.target.files?.[0])}/></label>
           <label>Upload Datasheet (PDF / Image)
             <input type="file" multiple accept="application/pdf,image/*,.pdf" onChange={e=>uploadDatasheets(si,ri,e.target.files)}/>
-            <span className="upload-help">Shared via Supabase · Images compressed automatically · PDF up to 6MB</span>
+            <span className="upload-help">Shared cloud storage · High-resolution WebP · PDF up to 6MB</span>
           </label>
           {(r.datasheets||[]).map((x,di)=><div className="file" key={x.url}><a href={x.url} target="_blank" rel="noreferrer">{x.type==='pdf'?'PDF · ':x.type==='image'?'Image · ':''}{x.name}</a><button onClick={()=>{const n=cp(d);n.sections[si].rows[ri].datasheets.splice(di,1);setD(n)}}>Remove</button></div>)}
         </div>
