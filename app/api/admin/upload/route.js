@@ -1,6 +1,8 @@
+import crypto from 'crypto';
 import {NextResponse} from 'next/server';
+import {put} from '@vercel/blob';
 import {hasPermission,validatedSystemSessionFromRequest} from '@/lib/systemAuth';
-import {isSupabaseConfigured,uploadSharedAsset} from '@/lib/supabaseStorage';
+import {isNeonConfigured,writeNeonAsset} from '@/lib/neonStore';
 
 export const runtime='nodejs';
 
@@ -22,13 +24,6 @@ export async function POST(request){
   const session=await validatedSystemSessionFromRequest(request);
   if(!(session&&hasPermission(session,'price.edit'))){
     return NextResponse.json({error:'Unauthorized'},{status:401});
-  }
-  if(!isSupabaseConfigured()){
-    return NextResponse.json({
-      error:'Supabase shared storage is not configured yet.',
-      storageUnavailable:true,
-      backend:'supabase'
-    },{status:503});
   }
 
   try{
@@ -55,24 +50,43 @@ export async function POST(request){
     }
 
     const ext=extFor(originalName,file.type);
-    const objectName=kind+'-'+Date.now()+'-'+safeName(originalName.replace(/\.[^.]+$/,'')||'file')+ext;
+    const objectName=kind+'-'+Date.now()+'-'+crypto.randomBytes(4).toString('hex')+'-'+safeName(originalName.replace(/\.[^.]+$/,'')||'file')+ext;
     const path='assets/'+productId+'/'+objectName;
     const body=Buffer.from(await file.arrayBuffer());
-    const url=await uploadSharedAsset({path,body,contentType:file.type||'application/octet-stream'});
 
+    try{
+      const blob=await put(path,body,{
+        access:'public',
+        addRandomSuffix:false,
+        allowOverwrite:false,
+        contentType:file.type||'application/octet-stream'
+      });
+      return NextResponse.json({
+        url:blob.url,
+        name:originalName,
+        type:isPdf?'pdf':isImage?'image':'file',
+        shared:true,
+        backend:'vercel-blob'
+      });
+    }catch(blobError){
+      console.warn('Vercel Blob unavailable; using Neon shared fallback.',blobError?.message||blobError);
+    }
+
+    if(!isNeonConfigured()){
+      return NextResponse.json({error:'Shared cloud file storage is unavailable.',storageUnavailable:true},{status:503});
+    }
+
+    const id=crypto.randomUUID();
+    await writeNeonAsset(id,{fileName:originalName,contentType:file.type||'application/octet-stream',body});
     return NextResponse.json({
-      url,
+      url:'/api/assets/'+encodeURIComponent(id),
       name:originalName,
       type:isPdf?'pdf':isImage?'image':'file',
       shared:true,
-      backend:'supabase'
+      backend:'neon-fallback'
     });
   }catch(error){
-    console.error('Supabase shared upload error',error);
-    return NextResponse.json({
-      error:error?.message||'Shared upload failed',
-      storageUnavailable:true,
-      backend:'supabase'
-    },{status:503});
+    console.error('Shared upload error',error);
+    return NextResponse.json({error:error?.message||'Shared upload failed',storageUnavailable:true},{status:503});
   }
 }
