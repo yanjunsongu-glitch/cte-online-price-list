@@ -6,7 +6,7 @@ const CTE_BRAND_LOGO="/icon.svg";
 
 const uid=()=>crypto.randomUUID();
 const today=()=>new Date().toISOString().slice(0,10);
-const emptyItem=()=>({id:uid(),productId:'',description:'',brand:'CTE',unit:'Pcs',qty:1,priceSource:'retail',unitPrice:'',discountPct:0,remark:'',warranty:'',image:'',datasheets:[]});
+const emptyItem=()=>({id:uid(),productId:'',description:'',brand:'CTE',unit:'Pcs',qty:1,priceSource:'retail',unitPrice:'',discountAmount:0,remark:'',warranty:'',image:'',datasheets:[]});
 const emptyQuotation=()=>({
   id:'',quotationNo:'',quotationDate:today(),validUntil:'',
   systemName:'125kW Solar Hybrid Installation System',
@@ -19,6 +19,28 @@ const emptyQuotation=()=>({
 function fmt(v){
   const n=Number(v||0);
   return Number.isFinite(n)?n.toLocaleString('en-US',{maximumFractionDigits:2}):String(v||'');
+}
+
+function discountAmountFor(item){
+  const qty=Math.max(0,Number(item?.qty||0));
+  const price=Math.max(0,Number(item?.unitPrice||0));
+  const gross=qty*price;
+  if(item?.discountAmount!==undefined&&item?.discountAmount!==null&&item?.discountAmount!==''){
+    return Math.min(gross,Math.max(0,Number(item.discountAmount)||0));
+  }
+  const legacyPct=Math.min(100,Math.max(0,Number(item?.discountPct||0)));
+  return gross*legacyPct/100;
+}
+function withDiscountAmounts(record){
+  if(!record)return record;
+  return {
+    ...record,
+    items:(record.items||[]).map(item=>({
+      ...item,
+      discountAmount:discountAmountFor(item),
+      discountPct:0
+    }))
+  };
 }
 function brandFor(name){
   const s=String(name||'').toUpperCase();
@@ -153,10 +175,11 @@ export default function Quotation(){
 
   const calc=useMemo(()=>{
     const rows=q.items.map(x=>{
-      const qty=Number(x.qty||0),price=Number(x.unitPrice||0),disc=Number(x.discountPct||0);
+      const qty=Number(x.qty||0),price=Number(x.unitPrice||0);
       const gross=qty*price;
-      const total=gross-(gross*disc/100);
-      return {...x,gross,total};
+      const discountAmount=Math.min(gross,discountAmountFor(x));
+      const total=Math.max(0,gross-discountAmount);
+      return {...x,gross,discountAmount,total};
     });
     return {rows,subtotal:rows.reduce((s,x)=>s+x.total,0)};
   },[q.items]);
@@ -169,8 +192,10 @@ export default function Quotation(){
       const now=new Date().toISOString();
       const local={...q,id:q.id||crypto.randomUUID(),updatedAt:now,createdAt:q.createdAt||now,createdBy:q.createdBy||'local'};
       const rows=(local.items||[]).map(x=>{
-        const qty=Number(x.qty||0),price=Number(x.unitPrice||0),disc=Number(x.discountPct||0);
-        const gross=qty*price; return {...x,total:gross-(gross*disc/100)};
+        const qty=Number(x.qty||0),price=Number(x.unitPrice||0);
+        const gross=qty*price;
+        const discountAmount=Math.min(gross,discountAmountFor(x));
+        return {...x,discountAmount,discountPct:0,total:Math.max(0,gross-discountAmount)};
       });
       local.subtotal=rows.reduce((s,x)=>s+Number(x.total||0),0);
       if(!local.quotationNo)local.quotationNo='CTE-LOCAL-'+today().replaceAll('-','')+'-'+local.id.slice(0,6).toUpperCase();
@@ -180,16 +205,16 @@ export default function Quotation(){
       setHistory(localQRead().map(localQSummary));
       return;
     }
-    const j=await r.json();
+    const j=withDiscountAmounts(await r.json());
     setQ(j);setMsg('Quotation saved to cloud.');
     const items=localQRead().filter(x=>x.id!==j.id);localQWrite(items);
     await load();
   }
   async function openRecord(id){
     const local=localQRead().find(x=>x.id===id);
-    if(local){setQ(local);setTab('edit');setMsg('Local quotation loaded.');return}
+    if(local){setQ(withDiscountAmounts(local));setTab('edit');setMsg('Local quotation loaded.');return}
     const r=await fetch('/api/quotation/records?id='+encodeURIComponent(id),{cache:'no-store'});
-    if(r.ok){setQ(await r.json());setTab('edit');setMsg('Quotation loaded.')}
+    if(r.ok){setQ(withDiscountAmounts(await r.json()));setTab('edit');setMsg('Quotation loaded.')}
   }
   function newQuotation(){
     const n=emptyQuotation();
@@ -276,7 +301,7 @@ export default function Quotation(){
                   <label>Qty<input type="number" min="0" value={it.qty} onChange={e=>patchItem(i,'qty',e.target.value)}/></label>
                   <label>Price Source<select value={it.priceSource} onChange={e=>changePriceSource(i,e.target.value)}><option value="retail">Retail</option><option value="installer">Installer</option><option value="wholesale">Wholesale</option><option value="custom">Custom</option></select></label>
                   <label>Unit Price<input type="number" min="0" step="0.01" value={it.unitPrice} onChange={e=>patchItem(i,'unitPrice',e.target.value)}/></label>
-                  <label>Discount %<input type="number" min="0" max="100" step="0.01" value={it.discountPct} onChange={e=>patchItem(i,'discountPct',e.target.value)}/></label>
+                  <label>Discount Amount ({q.currency})<input type="number" min="0" step="0.01" value={it.discountAmount??0} onChange={e=>patchItem(i,'discountAmount',e.target.value)}/></label>
                   <label>Warranty<input value={it.warranty} onChange={e=>patchItem(i,'warranty',e.target.value)}/></label>
                   <label className="wide">Remark<input value={it.remark} onChange={e=>patchItem(i,'remark',e.target.value)}/></label>
                 </div>
