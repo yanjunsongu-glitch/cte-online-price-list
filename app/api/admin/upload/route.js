@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import {NextResponse} from 'next/server';
 import {put} from '@vercel/blob';
 import {hasPermission,validatedSystemSessionFromRequest} from '@/lib/systemAuth';
-import {isNeonConfigured,writeNeonAsset} from '@/lib/neonStore';
+import {isNeonConfigured,writeNeonAsset,initNeonChunkedAsset,writeNeonAssetChunk} from '@/lib/neonStore';
 
 export const runtime='nodejs';
 
@@ -27,6 +27,42 @@ export async function POST(request){
   }
 
   try{
+    const url=new URL(request.url);
+    const chunkMode=url.searchParams.get('chunked')==='1';
+
+    if(chunkMode){
+      if(!isNeonConfigured()){
+        return NextResponse.json({error:'Shared cloud file storage is unavailable.'},{status:503});
+      }
+      const form=await request.formData();
+      const chunk=form.get('file');
+      const uploadId=String(form.get('uploadId')||'');
+      const index=Number(form.get('index')||0);
+      const total=Number(form.get('total')||0);
+      const fileName=safeName(form.get('fileName')||'file');
+      const contentType=String(form.get('contentType')||'application/octet-stream');
+      const totalSize=Number(form.get('totalSize')||0);
+
+      if(!uploadId||!chunk||typeof chunk.arrayBuffer!=='function'){
+        return NextResponse.json({error:'Invalid chunk upload.'},{status:400});
+      }
+
+      if(index===0){
+        await initNeonChunkedAsset(uploadId,{fileName,contentType,size:totalSize});
+      }
+      await writeNeonAssetChunk(uploadId,index,Buffer.from(await chunk.arrayBuffer()));
+
+      return NextResponse.json({
+        ok:true,
+        complete:index===total-1,
+        url:'/api/assets/'+encodeURIComponent(uploadId),
+        name:fileName,
+        type:contentType==='application/pdf'?'pdf':contentType.startsWith('image/')?'image':'file',
+        shared:true,
+        backend:'neon-chunked'
+      });
+    }
+
     const form=await request.formData();
     const file=form.get('file');
     const kind=String(form.get('kind')||'asset');
@@ -36,8 +72,8 @@ export async function POST(request){
     if(!file||typeof file.arrayBuffer!=='function'){
       return NextResponse.json({error:'No file received.'},{status:400});
     }
-    if(file.size>6*1024*1024){
-      return NextResponse.json({error:'Shared upload is limited to 6MB per file. Images are compressed automatically before upload.'},{status:413});
+    if(file.size>8*1024*1024){
+      return NextResponse.json({error:'This file is too large for direct upload. Please use the automatic chunked uploader.'},{status:413});
     }
 
     const isPdf=file.type==='application/pdf'||/\.pdf$/i.test(originalName);
