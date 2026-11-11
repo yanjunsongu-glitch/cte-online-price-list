@@ -98,6 +98,32 @@ async function prepareSharedImage(file){
 
 async function sharedUploadRequest(file,{productId,kind}){
   const prepared=kind==='image'||kind==='logo'?await prepareSharedImage(file):file;
+
+  // Use chunked Neon upload for files above 4 MB so Vercel request-body limits do not block large PDFs.
+  if(prepared.size>4*1024*1024){
+    const uploadId=crypto.randomUUID();
+    const chunkSize=700*1024;
+    const total=Math.ceil(prepared.size/chunkSize);
+    let last=null;
+
+    for(let index=0;index<total;index++){
+      const slice=prepared.slice(index*chunkSize,Math.min(prepared.size,(index+1)*chunkSize),prepared.type);
+      const fd=new FormData();
+      fd.append('file',slice,'chunk-'+index);
+      fd.append('uploadId',uploadId);
+      fd.append('index',String(index));
+      fd.append('total',String(total));
+      fd.append('fileName',prepared.name||file.name);
+      fd.append('contentType',prepared.type||file.type||'application/octet-stream');
+      fd.append('totalSize',String(prepared.size));
+      const r=await fetch('/api/admin/upload?chunked=1',{method:'POST',body:fd});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok)throw new Error(j.error||('Chunk '+(index+1)+' upload failed'));
+      last=j;
+    }
+    return last;
+  }
+
   const fd=new FormData();
   fd.append('file',prepared,prepared.name||file.name);
   fd.append('productId',productId||'file');
@@ -211,7 +237,9 @@ export default function Admin(){
         else z.datasheets=[...(z.datasheets||[]),result];
         return n;
       });
-      setMsg(result.backend==='neon-fallback'?'Uploaded to shared Neon fallback. Everyone can view it. Click Save & Publish.':'Uploaded to Vercel Blob. Everyone can view it. Click Save & Publish.');
+      setMsg(result.backend==='vercel-blob'
+        ?'Uploaded to Vercel Blob. Everyone can view it. Click Save & Publish.'
+        :'Uploaded to shared Neon storage. Everyone can view it. Click Save & Publish.');
       return result;
     }catch(e){
       console.error(e);
@@ -238,14 +266,21 @@ export default function Admin(){
     const list=Array.from(files||[]);
     if(!list.length)return;
     let ok=0,failed=0;
+    const errors=[];
     setMsg('Uploading '+list.length+' datasheet files…');
     for(const file of list){
       try{
         const result=await upload(si,ri,'datasheet',file);
-        if(result) ok++; else failed++;
-      }catch(e){failed++}
+        if(result) ok++;
+        else {failed++;errors.push(file.name);}
+      }catch(e){
+        failed++;
+        errors.push(file.name+': '+(e?.message||'failed'));
+      }
     }
-    setMsg((ok?ok+' uploaded':'No files uploaded')+(failed?' · '+failed+' failed':'')+'. Click Save & Publish.');
+    setMsg((ok?ok+' uploaded':'No files uploaded')+
+      (failed?' · '+failed+' failed'+(errors.length?' ('+errors.join('; ')+')':''):'')+
+      '. Click Save & Publish.');
   }
 
   async function uploadLogo(file){
@@ -359,7 +394,7 @@ export default function Admin(){
           <label>Replace photo<input type="file" accept="image/*" onChange={e=>upload(si,ri,'image',e.target.files?.[0])}/></label>
           <label>Upload Datasheet (PDF / Image)
             <input type="file" multiple accept="application/pdf,image/*,.pdf" onChange={e=>uploadDatasheets(si,ri,e.target.files)}/>
-            <span className="upload-help">Shared cloud storage · High-resolution WebP · PDF up to 6MB</span>
+            <span className="upload-help">Shared cloud storage · High-resolution WebP · Large PDFs upload automatically in chunks</span>
           </label>
           {(r.datasheets||[]).map((x,di)=><div className="file" key={x.url}><a href={x.url} target="_blank" rel="noreferrer">{x.type==='pdf'?'PDF · ':x.type==='image'?'Image · ':''}{x.name}</a><button onClick={()=>{const n=cp(d);n.sections[si].rows[ri].datasheets.splice(di,1);setD(n)}}>Remove</button></div>)}
         </div>
